@@ -1,5 +1,5 @@
 // === 设备认证配置 ===
-const DEVICE_REGISTRATION_KEY = "nn3225154040";
+const DEVICE_REGISTRATION_KEY = "88888886";
 const AUTHOR_DEVICE_KEY = "portfolio-author-device";
 const AUTHOR_STORAGE_KEY = "portfolio-author";
 const BASE_SITE_URL = "https://ningdesign-ai.github.io/nn-design--/";
