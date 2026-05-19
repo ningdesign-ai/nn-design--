@@ -1,16 +1,15 @@
-const AUTHOR_CODE = "portfolio-edit";
-const MASTER_AUTHOR_CODE = "nn3225154040";
+// === 设备认证配置 ===
+const DEVICE_REGISTRATION_KEY = "nn3225154040";
+const AUTHOR_DEVICE_KEY = "portfolio-author-device";
 const AUTHOR_STORAGE_KEY = "portfolio-author";
-// 部署到网站后，这里可以设成你站点的根地址：
-// 例如 https://ningdesign-ai.github.io/nn-design--/
 const BASE_SITE_URL = "https://ningdesign-ai.github.io/nn-design--/";
+
 const bodyElement = document.body;
 const siteContent = document.getElementById("site-content");
 const uploadSection = document.getElementById("upload");
 const authorBadge = document.getElementById("author-badge");
-const accessInput = document.getElementById("access-code");
-const unlockButton = document.getElementById("unlock-button");
-const lockError = document.getElementById("lock-error");
+const deauthButton = document.getElementById("deauthorize-device");
+
 const videoFileInput = document.getElementById("video-file");
 const imageFileInput = document.getElementById("image-file");
 const imageTitleInput = document.getElementById("image-title");
@@ -26,10 +25,48 @@ const copyShareLinkButton = document.getElementById("copy-share-link");
 const videoGrid = document.querySelector("#videos .grid");
 const imageGrid = document.querySelector("#images .grid");
 
-function getAuthorSaved() {
-  return localStorage.getItem(AUTHOR_STORAGE_KEY) === "true";
+// === 设备指纹 ===
+function generateDeviceFingerprint() {
+  var components = [
+    navigator.userAgent,
+    navigator.language,
+    navigator.platform,
+    screen.colorDepth,
+    screen.width,
+    screen.height,
+    navigator.hardwareConcurrency || 0,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+  ];
+  var str = components.join("|");
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    var char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return "dev-" + Math.abs(hash).toString(36);
 }
 
+function isAuthorDevice() {
+  var saved = localStorage.getItem(AUTHOR_DEVICE_KEY);
+  if (!saved) return false;
+  return saved === generateDeviceFingerprint();
+}
+
+function registerAuthorDevice(key) {
+  if (key !== DEVICE_REGISTRATION_KEY) return false;
+  localStorage.setItem(AUTHOR_DEVICE_KEY, generateDeviceFingerprint());
+  localStorage.setItem(AUTHOR_STORAGE_KEY, "true");
+  return true;
+}
+
+function deauthorizeDevice() {
+  localStorage.removeItem(AUTHOR_DEVICE_KEY);
+  localStorage.removeItem(AUTHOR_STORAGE_KEY);
+  window.location.reload();
+}
+
+// === 模式切换 ===
 function setAuthorMode(enabled) {
   if (uploadSection) {
     uploadSection.classList.toggle("hidden", !enabled);
@@ -38,71 +75,47 @@ function setAuthorMode(enabled) {
     authorBadge.textContent = enabled ? "作者模式" : "读者模式";
     authorBadge.classList.remove("hidden");
   }
+  if (deauthButton) {
+    deauthButton.classList.toggle("hidden", !enabled);
+  }
   localStorage.setItem(AUTHOR_STORAGE_KEY, enabled ? "true" : "false");
 }
 
-function setLockError(message) {
-  if (!lockError) return;
-  if (!message) {
-    lockError.textContent = "";
-    lockError.classList.add("hidden");
-    return;
-  }
-  lockError.textContent = message;
-  lockError.classList.remove("hidden");
-}
-
+// === URL 参数解析 ===
 function getUrlAccessCode() {
-  const params = new URLSearchParams(window.location.search);
+  var params = new URLSearchParams(window.location.search);
   return (
     params.get("access") ||
     params.get("auth") ||
     params.get("code") ||
-    params.get("author") ||
     ""
   ).trim();
 }
 
-function buildAccessUrl(accessValue) {
-  return `${getBaseUrl()}?access=${encodeURIComponent(accessValue)}`;
-}
-
-function isAuthorCode(value) {
-  return value === AUTHOR_CODE || value === MASTER_AUTHOR_CODE;
-}
-
 function isShareAccessValid() {
-  const params = new URLSearchParams(window.location.search);
-  const shareCode = params.get("share");
-  const expires = parseInt(params.get("exp"), 10);
-  if (!shareCode || !/^\d{4}$/.test(shareCode)) {
-    return false;
-  }
-  if (!expires || Number.isNaN(expires)) {
-    return false;
-  }
+  var params = new URLSearchParams(window.location.search);
+  var shareCode = params.get("share");
+  var expires = parseInt(params.get("exp"), 10);
+  if (!shareCode || !/^\d{4}$/.test(shareCode)) return false;
+  if (!expires || isNaN(expires)) return false;
   return Date.now() <= expires;
 }
 
+// === 页面授权 ===
 function authorizePage() {
-  const hash = window.location.hash.slice(1).trim();
-  const urlAccess = getUrlAccessCode();
-  const savedAuthor = getAuthorSaved();
-  const hasExplicitAuthorAccess = [hash, urlAccess].some(isAuthorCode);
-  const hasInvalidAuthorAttempt = (urlAccess && !isAuthorCode(urlAccess)) || (hash && !isAuthorCode(hash));
-  const hasShareAccess = isShareAccessValid();
-  const isUnlocked = hasExplicitAuthorAccess || savedAuthor || hasShareAccess;
-  const isAuthor = hasExplicitAuthorAccess || savedAuthor;
+  var hash = window.location.hash.slice(1).trim();
+  var urlAccess = getUrlAccessCode();
+  var registrationKey = urlAccess || hash;
 
-  if (hasInvalidAuthorAttempt) {
-    window.location.href = "lock.html";
+  // 一次性设备注册（通过 URL 参数或 hash）
+  if (registrationKey === DEVICE_REGISTRATION_KEY && !isAuthorDevice()) {
+    registerAuthorDevice(DEVICE_REGISTRATION_KEY);
+    window.location.href = getBaseUrl();
     return;
   }
 
-  if (!isUnlocked) {
-    window.location.href = "lock.html";
-    return;
-  }
+  var isAuthor = isAuthorDevice();
+  var hasShareAccess = isShareAccessValid();
 
   setAuthorMode(isAuthor);
 
@@ -111,53 +124,34 @@ function authorizePage() {
   }
 }
 
-function handleUnlockClick() {
-  const inputValue = accessInput ? accessInput.value.trim() : "";
-  if (!inputValue) {
-    setLockError("");
-    return;
-  }
-
-  if (isAuthorCode(inputValue)) {
-    const targetUrl = buildAccessUrl(inputValue === AUTHOR_CODE ? AUTHOR_CODE : MASTER_AUTHOR_CODE);
-    if (window.location.search !== `?access=${encodeURIComponent(inputValue)}`) {
-      window.location.href = targetUrl;
-      return;
-    }
-  }
-
-  setLockError("访问码不正确，请确认输入正确的作者码。");
-}
-
+// === 作品上传 ===
 function addVideoWork(file) {
   if (!videoGrid) return;
-  const url = URL.createObjectURL(file);
-  const item = document.createElement("article");
+  var url = URL.createObjectURL(file);
+  var item = document.createElement("article");
   item.className = "card";
-  item.innerHTML = `
-    <div class="video-preview">
-      <video controls src="${url}" preload="metadata"></video>
-    </div>
-    <div class="card-body">
-      <h3>${file.name}</h3>
-      <p>已上传的视频作品，页面会直接播放。</p>
-    </div>
-  `;
+  item.innerHTML =
+    '<div class="video-preview">' +
+    '<video controls src="' + url + '" preload="metadata"></video>' +
+    '</div>' +
+    '<div class="card-body">' +
+    '<h3>' + file.name + '</h3>' +
+    '<p>已上传的视频作品。</p>' +
+    '</div>';
   videoGrid.prepend(item);
 }
 
 function addImageWork(file, title, description) {
   if (!imageGrid) return;
-  const url = URL.createObjectURL(file);
-  const item = document.createElement("article");
+  var url = URL.createObjectURL(file);
+  var item = document.createElement("article");
   item.className = "card";
-  item.innerHTML = `
-    <img src="${url}" alt="${title}" />
-    <div class="card-body">
-      <h3>${title || file.name}</h3>
-      <p>${description || "已上传的图文作品。"}</p>
-    </div>
-  `;
+  item.innerHTML =
+    '<img src="' + url + '" alt="' + (title || file.name) + '" />' +
+    '<div class="card-body">' +
+    '<h3>' + (title || file.name) + '</h3>' +
+    '<p>' + (description || "已上传的图文作品。") + '</p>' +
+    '</div>';
   imageGrid.prepend(item);
 }
 
@@ -170,9 +164,20 @@ function uploadVideo() {
   videoFileInput.value = "";
 }
 
+function uploadImage() {
+  if (!imageFileInput || !imageFileInput.files.length) {
+    window.alert("请选择一张图片后再上传。");
+    return;
+  }
+  addImageWork(imageFileInput.files[0], imageTitleInput.value.trim(), imageDescriptionInput.value.trim());
+  imageFileInput.value = "";
+  imageTitleInput.value = "";
+  imageDescriptionInput.value = "";
+}
+
+// === 分享链接 ===
 function formatDate(timestamp) {
-  const date = new Date(timestamp);
-  return date.toLocaleString("zh-CN", {
+  return new Date(timestamp).toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -205,54 +210,29 @@ function showShareResult(url, code, expires) {
 }
 
 function generateShareLink() {
-  const code = generateRandomCode();
-  const expires = Date.now() + 3 * 24 * 60 * 60 * 1000;
-  const url = `${getBaseUrl()}?share=${code}&exp=${expires}`;
+  var code = generateRandomCode();
+  var expires = Date.now() + 3 * 24 * 60 * 60 * 1000;
+  var url = getBaseUrl() + "?share=" + code + "&exp=" + expires;
   showShareResult(url, code, expires);
 }
 
 function copyShareLink() {
   if (!shareLinkElement || !shareKeyElement || !shareExpireElement) return;
-  const url = shareLinkElement.textContent;
-  const code = shareKeyElement.textContent;
-  const expires = shareExpireElement.textContent;
+  var url = shareLinkElement.textContent;
+  var code = shareKeyElement.textContent;
+  var expires = shareExpireElement.textContent;
   if (!url || !code || !expires) return;
-
-  const textToCopy = `链接：${url}\n密码：${code}\n过期时间：${expires}`;
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    window.alert("分享信息已复制到剪贴板。格式：链接、密码、过期时间。"
-    );
-  }).catch(() => {
-    window.alert("复制失败，请手动复制分享信息。" );
-  });
+  navigator.clipboard.writeText("链接：" + url + "\n密码：" + code + "\n过期时间：" + expires)
+    .then(function () { window.alert("分享信息已复制到剪贴板。"); })
+    .catch(function () { window.alert("复制失败，请手动复制分享信息。"); });
 }
 
-function uploadImage() {
-  if (!imageFileInput || !imageFileInput.files.length) {
-    window.alert("请选择一张图片后再上传。");
-    return;
-  }
-  addImageWork(imageFileInput.files[0], imageTitleInput.value.trim(), imageDescriptionInput.value.trim());
-  imageFileInput.value = "";
-  imageTitleInput.value = "";
-  imageDescriptionInput.value = "";
-}
-
-if (uploadVideoButton) {
-  uploadVideoButton.addEventListener("click", uploadVideo);
-}
-
-if (uploadImageButton) {
-  uploadImageButton.addEventListener("click", uploadImage);
-}
-
-if (generateShareLinkButton) {
-  generateShareLinkButton.addEventListener("click", generateShareLink);
-}
-
-if (copyShareLinkButton) {
-  copyShareLinkButton.addEventListener("click", copyShareLink);
-}
+// === 事件绑定 ===
+if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
+if (uploadImageButton) uploadImageButton.addEventListener("click", uploadImage);
+if (generateShareLinkButton) generateShareLinkButton.addEventListener("click", generateShareLink);
+if (copyShareLinkButton) copyShareLinkButton.addEventListener("click", copyShareLink);
+if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
 
 window.addEventListener("load", authorizePage);
 window.addEventListener("hashchange", authorizePage);

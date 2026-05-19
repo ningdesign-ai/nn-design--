@@ -3,29 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>宁宁的作品集 - 锁定页</title>
+  <title>宁宁的作品集 - 注册作者设备</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="lock-screen">
     <div class="lock-card">
-      <h1>请输入作者密码</h1>
-      <p>成功验证后会跳转到宁宁的作品集首页。</p>
+      <h1>注册作者设备</h1>
+      <p>在当前设备上输入注册密钥，之后将自动识别为作者设备，无需再次输入密码。</p>
       <div class="code-input">
-        <input id="access-code" type="password" placeholder="请输入作者密码" />
-        <button id="unlock-button">进入</button>
+        <input id="access-code" type="password" placeholder="请输入设备注册密钥" />
+        <button id="unlock-button">注册此设备</button>
       </div>
       <p id="lock-error" class="hint error hidden"></p>
-      <p class="hint">如需访问请联系作者获取密码。</p>
+      <p class="hint" style="margin-top:12px;">注册后本设备可直接进入作者模式。只有作者本人的设备需要注册。</p>
+      <p id="already-registered" class="hint hidden" style="margin-top:12px;color:#2d7d46;">此设备已注册为作者设备。<br><a href="index.html" style="color:inherit;">进入作品集首页</a></p>
     </div>
   </div>
 
   <script>
-    const AUTHOR_CODE = "portfolio-edit";
-    const MASTER_AUTHOR_CODE = "nn3225154040";
-    const accessInput = document.getElementById("access-code");
-    const unlockButton = document.getElementById("unlock-button");
-    const lockError = document.getElementById("lock-error");
+    var DEVICE_REGISTRATION_KEY = "nn3225154040";
+    var AUTHOR_DEVICE_KEY = "portfolio-author-device";
+    var accessInput = document.getElementById("access-code");
+    var unlockButton = document.getElementById("unlock-button");
+    var lockError = document.getElementById("lock-error");
+    var alreadyRegistered = document.getElementById("already-registered");
+
+    function generateDeviceFingerprint() {
+      var components = [
+        navigator.userAgent,
+        navigator.language,
+        navigator.platform,
+        screen.colorDepth,
+        screen.width,
+        screen.height,
+        navigator.hardwareConcurrency || 0,
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ];
+      var str = components.join("|");
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
+        var char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0;
+      }
+      return "dev-" + Math.abs(hash).toString(36);
+    }
+
+    function isAuthorDevice() {
+      var saved = localStorage.getItem(AUTHOR_DEVICE_KEY);
+      if (!saved) return false;
+      return saved === generateDeviceFingerprint();
+    }
 
     function setLockError(message) {
       if (!lockError) return;
@@ -38,44 +67,37 @@
       lockError.classList.remove("hidden");
     }
 
-    function getBaseUrl() {
-      return window.location.href.split("?")[0].split("#")[0];
-    }
-
-    function handleUnlock() {
-      const inputValue = accessInput ? accessInput.value.trim() : "";
+    function handleRegister() {
+      var inputValue = accessInput ? accessInput.value.trim() : "";
       if (!inputValue) {
         setLockError("");
         return;
       }
 
-      if (inputValue === AUTHOR_CODE || inputValue === MASTER_AUTHOR_CODE) {
-        const targetUrl = `${getBaseUrl().replace(/lock\.html$/, "index.html")}?access=${encodeURIComponent(inputValue)}`;
-        window.location.href = targetUrl;
+      if (inputValue === DEVICE_REGISTRATION_KEY) {
+        localStorage.setItem(AUTHOR_DEVICE_KEY, generateDeviceFingerprint());
+        localStorage.setItem("portfolio-author", "true");
+        window.location.href = "index.html";
         return;
       }
 
-      setLockError("访问码不正确，请确认输入正确的作者密码。");
+      setLockError("注册密钥不正确，请联系作者获取。");
     }
 
     if (unlockButton) {
-      unlockButton.addEventListener("click", handleUnlock);
+      unlockButton.addEventListener("click", handleRegister);
     }
 
     if (accessInput) {
-      accessInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          handleUnlock();
-        }
+      accessInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") handleRegister();
       });
     }
 
-    window.addEventListener("load", () => {
-      const params = new URLSearchParams(window.location.search);
-      const access = params.get("access");
-      if (access === AUTHOR_CODE || access === MASTER_AUTHOR_CODE) {
-        const targetUrl = `${getBaseUrl().replace(/lock\.html$/, "index.html")}?access=${encodeURIComponent(access)}`;
-        window.location.href = targetUrl;
+    window.addEventListener("load", function () {
+      if (isAuthorDevice() && alreadyRegistered) {
+        alreadyRegistered.classList.remove("hidden");
+        if (unlockButton) unlockButton.textContent = "重新注册";
       }
     });
   </script>
