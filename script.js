@@ -1,7 +1,10 @@
 const AUTHOR_CODE = "portfolio-edit";
 const MASTER_AUTHOR_CODE = "nn3225154040";
 const AUTHOR_STORAGE_KEY = "portfolio-author";
-const lockScreen = document.getElementById("lock-screen");
+// 部署到网站后，这里可以设成你站点的根地址：
+// 例如 https://ningdesign-ai.github.io/nn-design--/
+const BASE_SITE_URL = "https://ningdesign-ai.github.io/nn-design--/";
+const bodyElement = document.body;
 const siteContent = document.getElementById("site-content");
 const uploadSection = document.getElementById("upload");
 const authorBadge = document.getElementById("author-badge");
@@ -32,7 +35,8 @@ function setAuthorMode(enabled) {
     uploadSection.classList.toggle("hidden", !enabled);
   }
   if (authorBadge) {
-    authorBadge.classList.toggle("hidden", !enabled);
+    authorBadge.textContent = enabled ? "作者模式" : "读者模式";
+    authorBadge.classList.remove("hidden");
   }
   localStorage.setItem(AUTHOR_STORAGE_KEY, enabled ? "true" : "false");
 }
@@ -59,6 +63,14 @@ function getUrlAccessCode() {
   ).trim();
 }
 
+function buildAccessUrl(accessValue) {
+  return `${getBaseUrl()}?access=${encodeURIComponent(accessValue)}`;
+}
+
+function isAuthorCode(value) {
+  return value === AUTHOR_CODE || value === MASTER_AUTHOR_CODE;
+}
+
 function isShareAccessValid() {
   const params = new URLSearchParams(window.location.search);
   const shareCode = params.get("share");
@@ -72,41 +84,49 @@ function isShareAccessValid() {
   return Date.now() <= expires;
 }
 
-function unlockPage() {
+function authorizePage() {
   const hash = window.location.hash.slice(1).trim();
   const urlAccess = getUrlAccessCode();
-  const inputValue = accessInput ? accessInput.value.trim() : "";
   const savedAuthor = getAuthorSaved();
-  const isAuthor =
-    savedAuthor ||
-    [hash, urlAccess, inputValue].some(
-      (value) => value === AUTHOR_CODE || value === MASTER_AUTHOR_CODE
-    );
+  const hasExplicitAuthorAccess = [hash, urlAccess].some(isAuthorCode);
+  const hasInvalidAuthorAttempt = (urlAccess && !isAuthorCode(urlAccess)) || (hash && !isAuthorCode(hash));
   const hasShareAccess = isShareAccessValid();
-  const isUnlocked = isAuthor || hasShareAccess;
+  const isUnlocked = hasExplicitAuthorAccess || savedAuthor || hasShareAccess;
+  const isAuthor = hasExplicitAuthorAccess || savedAuthor;
 
-  if (isUnlocked) {
-    if (isAuthor) {
-      setAuthorMode(true);
-    }
+  if (hasInvalidAuthorAttempt) {
+    window.location.href = "lock.html";
+    return;
+  }
+
+  if (!isUnlocked) {
+    window.location.href = "lock.html";
+    return;
+  }
+
+  setAuthorMode(isAuthor);
+
+  if (bodyElement) {
+    bodyElement.classList.add("visible");
+  }
+}
+
+function handleUnlockClick() {
+  const inputValue = accessInput ? accessInput.value.trim() : "";
+  if (!inputValue) {
     setLockError("");
-    lockScreen.classList.add("hidden");
-    siteContent.classList.remove("hidden");
-    if (!isAuthor) {
-      setAuthorMode(false);
-    }
-  } else {
-    lockScreen.classList.remove("hidden");
-    siteContent.classList.add("hidden");
-    setAuthorMode(false);
-    if (inputValue) {
-      setLockError(
-        "访问码不正确，请确认输入 portfolio-edit 或 nn3225154040，或使用有效分享链接。也可以尝试 URL 参数：?access=portfolio-edit 或 ?access=nn3225154040。"
-      );
-    } else {
-      setLockError("");
+    return;
+  }
+
+  if (isAuthorCode(inputValue)) {
+    const targetUrl = buildAccessUrl(inputValue === AUTHOR_CODE ? AUTHOR_CODE : MASTER_AUTHOR_CODE);
+    if (window.location.search !== `?access=${encodeURIComponent(inputValue)}`) {
+      window.location.href = targetUrl;
+      return;
     }
   }
+
+  setLockError("访问码不正确，请确认输入正确的作者码。");
 }
 
 function addVideoWork(file) {
@@ -166,6 +186,12 @@ function generateRandomCode() {
 }
 
 function getBaseUrl() {
+  if (BASE_SITE_URL) {
+    return BASE_SITE_URL.replace(/\/index\.html$|\/$/, "/index.html");
+  }
+  if (window.location.protocol.startsWith("http")) {
+    return window.location.origin + window.location.pathname;
+  }
   return window.location.href.split("?")[0].split("#")[0];
 }
 
@@ -186,13 +212,18 @@ function generateShareLink() {
 }
 
 function copyShareLink() {
-  if (!shareLinkElement) return;
+  if (!shareLinkElement || !shareKeyElement || !shareExpireElement) return;
   const url = shareLinkElement.textContent;
-  if (!url) return;
-  navigator.clipboard.writeText(url).then(() => {
-    window.alert("分享链接已复制到剪贴板。");
+  const code = shareKeyElement.textContent;
+  const expires = shareExpireElement.textContent;
+  if (!url || !code || !expires) return;
+
+  const textToCopy = `链接：${url}\n密码：${code}\n过期时间：${expires}`;
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    window.alert("分享信息已复制到剪贴板。格式：链接、密码、过期时间。"
+    );
   }).catch(() => {
-    window.alert("复制失败，请手动复制链接。");
+    window.alert("复制失败，请手动复制分享信息。" );
   });
 }
 
@@ -205,18 +236,6 @@ function uploadImage() {
   imageFileInput.value = "";
   imageTitleInput.value = "";
   imageDescriptionInput.value = "";
-}
-
-if (unlockButton) {
-  unlockButton.addEventListener("click", unlockPage);
-}
-
-if (accessInput) {
-  accessInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      unlockPage();
-    }
-  });
 }
 
 if (uploadVideoButton) {
@@ -235,5 +254,5 @@ if (copyShareLinkButton) {
   copyShareLinkButton.addEventListener("click", copyShareLink);
 }
 
-window.addEventListener("load", unlockPage);
-window.addEventListener("hashchange", unlockPage);
+window.addEventListener("load", authorizePage);
+window.addEventListener("hashchange", authorizePage);

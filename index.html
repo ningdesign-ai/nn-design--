@@ -8,22 +8,17 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    body.auth-check {
+      visibility: hidden;
+    }
+    body.auth-check.visible {
+      visibility: visible;
+    }
+  </style>
 </head>
-<body>
-  <div id="lock-screen" class="lock-screen">
-    <div class="lock-card">
-      <h1>欢迎来到宁宁的作品集</h1>
-      <p>这是一个半公开作品集页面。请使用我发给你的私人链接进入。</p>
-      <div class="code-input">
-        <input id="access-code" type="text" placeholder="请输入访问码" />
-        <button id="unlock-button">进入</button>
-      </div>
-      <p id="lock-error" class="hint error hidden"></p>
-      <p class="hint">如果仍然进不去，请按 Cmd+Shift+R（Mac）或 Ctrl+Shift+R（Windows）强制刷新页面。</p>
-    </div>
-  </div>
-
-  <div id="site-content" class="site-content hidden">
+<body class="auth-check">
+  <div id="site-content" class="site-content">
     <header class="topbar">
       <div>
         <p class="brand">宁宁</p>
@@ -73,7 +68,7 @@
               <p><strong>分享链接：</strong><a id="share-link" href="#" target="_blank" rel="noreferrer"></a></p>
               <p><strong>密匙：</strong><span id="share-key"></span></p>
               <p><strong>过期时间：</strong><span id="share-expire"></span></p>
-              <button id="copy-share-link">复制链接</button>
+              <button id="copy-share-link">复制分享信息</button>
             </div>
           </div>
         </div>
@@ -132,6 +127,6 @@
     </main>
   </div>
 
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=4"></script>
 </body>
 </html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>宁宁的作品集 - 锁定页</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="lock-screen">
+    <div class="lock-card">
+      <h1>请输入作者密码</h1>
+      <p>成功验证后会跳转到宁宁的作品集首页。</p>
+      <div class="code-input">
+        <input id="access-code" type="password" placeholder="请输入作者密码" />
+        <button id="unlock-button">进入</button>
+      </div>
+      <p id="lock-error" class="hint error hidden"></p>
+      <p class="hint">如需访问请联系作者获取密码。</p>
+    </div>
+  </div>
+
+  <script>
+    const AUTHOR_CODE = "portfolio-edit";
+    const MASTER_AUTHOR_CODE = "nn3225154040";
+    const accessInput = document.getElementById("access-code");
+    const unlockButton = document.getElementById("unlock-button");
+    const lockError = document.getElementById("lock-error");
+
+    function setLockError(message) {
+      if (!lockError) return;
+      if (!message) {
+        lockError.textContent = "";
+        lockError.classList.add("hidden");
+        return;
+      }
+      lockError.textContent = message;
+      lockError.classList.remove("hidden");
+    }
+
+    function getBaseUrl() {
+      return window.location.href.split("?")[0].split("#")[0];
+    }
+
+    function handleUnlock() {
+      const inputValue = accessInput ? accessInput.value.trim() : "";
+      if (!inputValue) {
+        setLockError("");
+        return;
+      }
+
+      if (inputValue === AUTHOR_CODE || inputValue === MASTER_AUTHOR_CODE) {
+        const targetUrl = `${getBaseUrl().replace(/lock\.html$/, "index.html")}?access=${encodeURIComponent(inputValue)}`;
+        window.location.href = targetUrl;
+        return;
+      }
+
+      setLockError("访问码不正确，请确认输入正确的作者密码。");
+    }
+
+    if (unlockButton) {
+      unlockButton.addEventListener("click", handleUnlock);
+    }
+
+    if (accessInput) {
+      accessInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          handleUnlock();
+        }
+      });
+    }
+
+    window.addEventListener("load", () => {
+      const params = new URLSearchParams(window.location.search);
+      const access = params.get("access");
+      if (access === AUTHOR_CODE || access === MASTER_AUTHOR_CODE) {
+        const targetUrl = `${getBaseUrl().replace(/lock\.html$/, "index.html")}?access=${encodeURIComponent(access)}`;
+        window.location.href = targetUrl;
+      }
+    });
+  </script>
+</body>
+</html>
