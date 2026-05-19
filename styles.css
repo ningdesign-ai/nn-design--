@@ -27,16 +27,6 @@ body {
   margin-left: 18px;
 }
 
-#portfolio:target ~ #lock-screen,
-#portfolio-edit:target ~ #lock-screen {
-  display: none;
-}
-
-#portfolio:target ~ #site-content,
-#portfolio-edit:target ~ #site-content {
-  display: block;
-}
-
 .button-link {
   color: #111;
   text-decoration: none;
@@ -183,6 +173,29 @@ nav a {
   color: #fff;
   font-size: 15px;
   cursor: pointer;
+}
+
+.share-result {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  background: #fcfcfc;
+}
+
+.share-result p {
+  margin: 10px 0;
+  word-break: break-all;
+}
+
+.share-result a {
+  color: #111;
+  text-decoration: underline;
+}
+
+.share-result button {
+  width: auto;
+  padding: 12px 18px;
 }
 
 .card {

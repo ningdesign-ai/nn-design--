@@ -1,5 +1,5 @@
-const VIEW_CODE = "portfolio";
 const AUTHOR_CODE = "portfolio-edit";
+const MASTER_AUTHOR_CODE = "nn3225154040";
 const AUTHOR_STORAGE_KEY = "portfolio-author";
 const lockScreen = document.getElementById("lock-screen");
 const siteContent = document.getElementById("site-content");
@@ -14,6 +14,12 @@ const imageTitleInput = document.getElementById("image-title");
 const imageDescriptionInput = document.getElementById("image-description");
 const uploadVideoButton = document.getElementById("upload-video");
 const uploadImageButton = document.getElementById("upload-image");
+const generateShareLinkButton = document.getElementById("generate-share-link");
+const shareResult = document.getElementById("share-result");
+const shareLinkElement = document.getElementById("share-link");
+const shareKeyElement = document.getElementById("share-key");
+const shareExpireElement = document.getElementById("share-expire");
+const copyShareLinkButton = document.getElementById("copy-share-link");
 const videoGrid = document.querySelector("#videos .grid");
 const imageGrid = document.querySelector("#images .grid");
 
@@ -42,31 +48,43 @@ function setLockError(message) {
   lockError.classList.remove("hidden");
 }
 
+function isShareAccessValid() {
+  const params = new URLSearchParams(window.location.search);
+  const shareCode = params.get("share");
+  const expires = parseInt(params.get("exp"), 10);
+  if (!shareCode || !/^\d{4}$/.test(shareCode)) {
+    return false;
+  }
+  if (!expires || Number.isNaN(expires)) {
+    return false;
+  }
+  return Date.now() <= expires;
+}
+
 function unlockPage() {
   const hash = window.location.hash.slice(1).trim();
   const inputValue = accessInput ? accessInput.value.trim() : "";
   const savedAuthor = getAuthorSaved();
-  const isView = hash === VIEW_CODE || inputValue === VIEW_CODE;
-  const isAuthor = hash === AUTHOR_CODE || inputValue === AUTHOR_CODE || savedAuthor;
-  const isUnlocked = isView || isAuthor;
+  const isAuthor = hash === AUTHOR_CODE || inputValue === AUTHOR_CODE || inputValue === MASTER_AUTHOR_CODE || savedAuthor;
+  const hasShareAccess = isShareAccessValid();
+  const isUnlocked = isAuthor || hasShareAccess;
 
   if (isUnlocked) {
-    if (inputValue === VIEW_CODE && hash !== VIEW_CODE) {
-      window.location.hash = VIEW_CODE;
-    }
-    if (inputValue === AUTHOR_CODE && hash !== AUTHOR_CODE) {
-      window.location.hash = AUTHOR_CODE;
+    if (isAuthor) {
+      setAuthorMode(true);
     }
     setLockError("");
     lockScreen.classList.add("hidden");
     siteContent.classList.remove("hidden");
-    setAuthorMode(isAuthor);
+    if (!isAuthor) {
+      setAuthorMode(false);
+    }
   } else {
     lockScreen.classList.remove("hidden");
     siteContent.classList.add("hidden");
     setAuthorMode(false);
     if (inputValue) {
-      setLockError("访问码不正确，请确认输入 portfolio 或 portfolio-edit。");
+      setLockError("访问码不正确，请确认输入 portfolio-edit 或 nn3225154040，或使用有效分享链接。");
     } else {
       setLockError("");
     }
@@ -114,6 +132,52 @@ function uploadVideo() {
   videoFileInput.value = "";
 }
 
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function generateRandomCode() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+function getBaseUrl() {
+  return window.location.href.split("?")[0].split("#")[0];
+}
+
+function showShareResult(url, code, expires) {
+  if (!shareResult || !shareLinkElement || !shareKeyElement || !shareExpireElement) return;
+  shareLinkElement.textContent = url;
+  shareLinkElement.href = url;
+  shareKeyElement.textContent = code;
+  shareExpireElement.textContent = formatDate(expires);
+  shareResult.classList.remove("hidden");
+}
+
+function generateShareLink() {
+  const code = generateRandomCode();
+  const expires = Date.now() + 3 * 24 * 60 * 60 * 1000;
+  const url = `${getBaseUrl()}?share=${code}&exp=${expires}`;
+  showShareResult(url, code, expires);
+}
+
+function copyShareLink() {
+  if (!shareLinkElement) return;
+  const url = shareLinkElement.textContent;
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(() => {
+    window.alert("分享链接已复制到剪贴板。");
+  }).catch(() => {
+    window.alert("复制失败，请手动复制链接。");
+  });
+}
+
 function uploadImage() {
   if (!imageFileInput || !imageFileInput.files.length) {
     window.alert("请选择一张图片后再上传。");
@@ -143,6 +207,14 @@ if (uploadVideoButton) {
 
 if (uploadImageButton) {
   uploadImageButton.addEventListener("click", uploadImage);
+}
+
+if (generateShareLinkButton) {
+  generateShareLinkButton.addEventListener("click", generateShareLink);
+}
+
+if (copyShareLinkButton) {
+  copyShareLinkButton.addEventListener("click", copyShareLink);
 }
 
 window.addEventListener("load", unlockPage);
