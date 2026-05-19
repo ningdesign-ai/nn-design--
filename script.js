@@ -48,6 +48,17 @@ function setLockError(message) {
   lockError.classList.remove("hidden");
 }
 
+function getUrlAccessCode() {
+  const params = new URLSearchParams(window.location.search);
+  return (
+    params.get("access") ||
+    params.get("auth") ||
+    params.get("code") ||
+    params.get("author") ||
+    ""
+  ).trim();
+}
+
 function isShareAccessValid() {
   const params = new URLSearchParams(window.location.search);
   const shareCode = params.get("share");
@@ -63,9 +74,14 @@ function isShareAccessValid() {
 
 function unlockPage() {
   const hash = window.location.hash.slice(1).trim();
+  const urlAccess = getUrlAccessCode();
   const inputValue = accessInput ? accessInput.value.trim() : "";
   const savedAuthor = getAuthorSaved();
-  const isAuthor = hash === AUTHOR_CODE || inputValue === AUTHOR_CODE || inputValue === MASTER_AUTHOR_CODE || savedAuthor;
+  const isAuthor =
+    savedAuthor ||
+    [hash, urlAccess, inputValue].some(
+      (value) => value === AUTHOR_CODE || value === MASTER_AUTHOR_CODE
+    );
   const hasShareAccess = isShareAccessValid();
   const isUnlocked = isAuthor || hasShareAccess;
 
@@ -84,7 +100,9 @@ function unlockPage() {
     siteContent.classList.add("hidden");
     setAuthorMode(false);
     if (inputValue) {
-      setLockError("访问码不正确，请确认输入 portfolio-edit 或 nn3225154040，或使用有效分享链接。");
+      setLockError(
+        "访问码不正确，请确认输入 portfolio-edit 或 nn3225154040，或使用有效分享链接。也可以尝试 URL 参数：?access=portfolio-edit 或 ?access=nn3225154040。"
+      );
     } else {
       setLockError("");
     }
