@@ -278,6 +278,7 @@ function refreshCardSettings() {
   var cards = document.querySelectorAll(".card");
   cards.forEach(function (card) {
     createSettingsMenu(card);
+    setCardEditable(card, gIsAuthor);
   });
 }
 
@@ -288,27 +289,22 @@ function deleteWork(card) {
   }
 }
 
-// === 修改作品（编辑标题 & 描述） ===
-function editWork(card) {
+// === 卡片文字可编辑 ===
+function setCardEditable(card, enabled) {
   var title = card.querySelector(".card-body h3");
   var desc = card.querySelector(".card-body p");
+  if (title) title.contentEditable = enabled ? "true" : "false";
+  if (desc) desc.contentEditable = enabled ? "true" : "false";
+}
 
+// === 修改作品（聚焦标题） ===
+function editWork(card) {
+  var title = card.querySelector(".card-body h3");
   if (title) {
-    title.contentEditable = "true";
     title.classList.add("editing");
     title.focus();
     title.addEventListener("blur", function () {
-      title.contentEditable = "false";
       title.classList.remove("editing");
-    }, { once: true });
-  }
-
-  if (desc) {
-    desc.contentEditable = "true";
-    desc.classList.add("editing");
-    desc.addEventListener("blur", function () {
-      desc.contentEditable = "false";
-      desc.classList.remove("editing");
     }, { once: true });
   }
 }
@@ -374,9 +370,9 @@ function bindCardLightbox(card) {
 function initAllCards() {
   var cards = document.querySelectorAll(".card");
   cards.forEach(function (card) {
-    // 确保有 card-media 包裹层
     ensureCardMedia(card);
     createSettingsMenu(card);
+    setCardEditable(card, gIsAuthor);
     bindCardLightbox(card);
   });
 }
@@ -432,6 +428,7 @@ function addImageWork(file, title, description) {
 
 function initSingleCard(card) {
   createSettingsMenu(card);
+  setCardEditable(card, gIsAuthor);
   bindCardLightbox(card);
 }
 
@@ -469,6 +466,18 @@ function getBaseUrl() {
 if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
 if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
 if (uploadImageButton) uploadImageButton.addEventListener("click", uploadImage);
+
+document.addEventListener("focusin", function (e) {
+  if (e.target.closest(".card-body") && e.target.isContentEditable) {
+    e.target.classList.add("editing");
+  }
+});
+
+document.addEventListener("focusout", function (e) {
+  if (e.target.closest(".card-body") && e.target.isContentEditable) {
+    e.target.classList.remove("editing");
+  }
+});
 
 document.addEventListener("keydown", function (e) {
   if (e.key === "Escape") closeLightbox();
