@@ -4,6 +4,7 @@ const AUTHOR_DEVICE_KEY = "portfolio-author-device";
 const AUTHOR_STORAGE_KEY = "portfolio-author";
 const BASE_SITE_URL = "https://ningdesign-ai.github.io/nn-design--/";
 
+const deauthButton = document.getElementById("deauthorize-device");
 const bodyElement = document.body;
 const siteContent = document.getElementById("site-content");
 const uploadSection = document.getElementById("upload");
@@ -68,6 +69,9 @@ function setAuthorMode(enabled) {
     authorBadge.classList.remove("hidden");
   }
   localStorage.setItem(AUTHOR_STORAGE_KEY, enabled ? "true" : "false");
+  if (deauthButton) {
+    deauthButton.classList.toggle("hidden", !enabled);
+  }
 }
 
 // === URL 参数解析 ===
@@ -79,6 +83,12 @@ function getUrlAccessCode() {
     params.get("code") ||
     ""
   ).trim();
+}
+
+function deauthorizeDevice() {
+  localStorage.removeItem(AUTHOR_DEVICE_KEY);
+  localStorage.removeItem(AUTHOR_STORAGE_KEY);
+  window.location.reload();
 }
 
 function isShareAccessValid() {
@@ -217,6 +227,7 @@ function copyShareLink() {
 }
 
 // === 事件绑定 ===
+if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
 if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
 if (uploadImageButton) uploadImageButton.addEventListener("click", uploadImage);
 if (generateShareLinkButton) generateShareLinkButton.addEventListener("click", generateShareLink);
