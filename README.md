@@ -29,8 +29,6 @@
 
   `https://你的域名或平台地址/index.html#portfolio-edit`
 
-- 作者主密钥为：`nn3225154040`
-
 ## 推荐的简单托管方式
 
 ### 1. GitHub Pages
