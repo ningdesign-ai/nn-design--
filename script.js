@@ -16,12 +16,6 @@ var imageTitleInput = document.getElementById("image-title");
 var imageDescriptionInput = document.getElementById("image-description");
 var uploadVideoButton = document.getElementById("upload-video");
 var uploadImageButton = document.getElementById("upload-image");
-var generateShareLinkButton = document.getElementById("generate-share-link");
-var shareResult = document.getElementById("share-result");
-var shareLinkElement = document.getElementById("share-link");
-var shareKeyElement = document.getElementById("share-key");
-var shareExpireElement = document.getElementById("share-expire");
-var copyShareLinkButton = document.getElementById("copy-share-link");
 var videoGrid = document.querySelector("#videos .grid");
 var imageGrid = document.querySelector("#images .grid");
 
@@ -94,15 +88,6 @@ function getUrlAccessCode() {
     params.get("code") ||
     ""
   ).trim();
-}
-
-function isShareAccessValid() {
-  var params = new URLSearchParams(window.location.search);
-  var shareCode = params.get("share");
-  var expires = parseInt(params.get("exp"), 10);
-  if (!shareCode || !/^\d{4}$/.test(shareCode)) return false;
-  if (!expires || isNaN(expires)) return false;
-  return Date.now() <= expires;
 }
 
 // === 水印图案生成 ===
@@ -470,21 +455,6 @@ function uploadImage() {
   imageDescriptionInput.value = "";
 }
 
-// === 分享链接 ===
-function formatDate(timestamp) {
-  return new Date(timestamp).toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function generateRandomCode() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
 function getBaseUrl() {
   if (BASE_SITE_URL) {
     return BASE_SITE_URL.replace(/\/index\.html$|\/$/, "/index.html");
@@ -495,39 +465,10 @@ function getBaseUrl() {
   return window.location.href.split("?")[0].split("#")[0];
 }
 
-function showShareResult(url, code, expires) {
-  if (!shareResult || !shareLinkElement || !shareKeyElement || !shareExpireElement) return;
-  shareLinkElement.textContent = url;
-  shareLinkElement.href = url;
-  shareKeyElement.textContent = code;
-  shareExpireElement.textContent = formatDate(expires);
-  shareResult.classList.remove("hidden");
-}
-
-function generateShareLink() {
-  var code = generateRandomCode();
-  var expires = Date.now() + 3 * 24 * 60 * 60 * 1000;
-  var url = getBaseUrl() + "?share=" + code + "&exp=" + expires;
-  showShareResult(url, code, expires);
-}
-
-function copyShareLink() {
-  if (!shareLinkElement || !shareKeyElement || !shareExpireElement) return;
-  var url = shareLinkElement.textContent;
-  var code = shareKeyElement.textContent;
-  var expires = shareExpireElement.textContent;
-  if (!url || !code || !expires) return;
-  navigator.clipboard.writeText("链接：" + url + "\n密码：" + code + "\n过期时间：" + expires)
-    .then(function () { window.alert("分享信息已复制到剪贴板。"); })
-    .catch(function () { window.alert("复制失败，请手动复制分享信息。"); });
-}
-
 // === 事件绑定 ===
 if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
 if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
 if (uploadImageButton) uploadImageButton.addEventListener("click", uploadImage);
-if (generateShareLinkButton) generateShareLinkButton.addEventListener("click", generateShareLink);
-if (copyShareLinkButton) copyShareLinkButton.addEventListener("click", copyShareLink);
 
 document.addEventListener("keydown", function (e) {
   if (e.key === "Escape") closeLightbox();
