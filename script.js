@@ -8,8 +8,6 @@ const bodyElement = document.body;
 const siteContent = document.getElementById("site-content");
 const uploadSection = document.getElementById("upload");
 const authorBadge = document.getElementById("author-badge");
-const deauthButton = document.getElementById("deauthorize-device");
-
 const videoFileInput = document.getElementById("video-file");
 const imageFileInput = document.getElementById("image-file");
 const imageTitleInput = document.getElementById("image-title");
@@ -60,12 +58,6 @@ function registerAuthorDevice(key) {
   return true;
 }
 
-function deauthorizeDevice() {
-  localStorage.removeItem(AUTHOR_DEVICE_KEY);
-  localStorage.removeItem(AUTHOR_STORAGE_KEY);
-  window.location.reload();
-}
-
 // === 模式切换 ===
 function setAuthorMode(enabled) {
   if (uploadSection) {
@@ -74,9 +66,6 @@ function setAuthorMode(enabled) {
   if (authorBadge) {
     authorBadge.textContent = enabled ? "作者模式" : "读者模式";
     authorBadge.classList.remove("hidden");
-  }
-  if (deauthButton) {
-    deauthButton.classList.toggle("hidden", !enabled);
   }
   localStorage.setItem(AUTHOR_STORAGE_KEY, enabled ? "true" : "false");
 }
@@ -232,7 +221,6 @@ if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
 if (uploadImageButton) uploadImageButton.addEventListener("click", uploadImage);
 if (generateShareLinkButton) generateShareLinkButton.addEventListener("click", generateShareLink);
 if (copyShareLinkButton) copyShareLinkButton.addEventListener("click", copyShareLink);
-if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
 
 window.addEventListener("load", authorizePage);
 window.addEventListener("hashchange", authorizePage);
