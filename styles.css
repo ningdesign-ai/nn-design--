@@ -10,11 +10,7 @@ body {
 }
 
 .hidden {
-  display: none;
-}
-
-.author-only.hidden {
-  display: none;
+  display: none !important;
 }
 
 .author-badge {
@@ -215,25 +211,34 @@ nav a {
   padding: 12px 18px;
 }
 
+/* === 作品卡片 === */
 .card {
   background: #fff;
   border: 1px solid #ececec;
   border-radius: 20px;
-  overflow: hidden;
   box-shadow: 0 16px 40px rgba(0,0,0,0.04);
+  position: relative;
 }
 
-.card img,
+.card-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+  cursor: pointer;
+}
+
+.card-media img,
+.card-media video,
 .video-preview {
   width: 100%;
   display: block;
-  position: relative;
 }
 
 .video-preview {
   background: #000;
   color: #fff;
   min-height: 190px;
+  position: relative;
 }
 
 .video-preview img,
@@ -252,6 +257,159 @@ nav a {
   color: rgba(255,255,255,0.9);
 }
 
+/* === 设置图标 & 下拉菜单 === */
+.card-settings {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.card-settings:hover {
+  background: rgba(0,0,0,0.8);
+}
+
+.settings-menu {
+  position: absolute;
+  top: 44px;
+  right: 10px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  z-index: 10;
+  min-width: 140px;
+  overflow: hidden;
+  display: none;
+}
+
+.settings-menu.visible {
+  display: block;
+}
+
+.settings-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.settings-menu button:hover {
+  background: #f5f5f5;
+}
+
+.settings-menu button.danger {
+  color: #d85656;
+}
+
+.settings-menu button.danger:hover {
+  background: #fef0f0;
+}
+
+/* === 标题 & 描述可编辑 === */
+.card-body h3.editing,
+.card-body p.editing {
+  outline: 2px solid #007aff;
+  outline-offset: 4px;
+  border-radius: 6px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.card-body h3.editing {
+  margin-bottom: 8px;
+}
+
+/* === 灯箱 === */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.92);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 1010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.lightbox-close:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  z-index: 1005;
+}
+
+.lightbox-content img,
+.lightbox-content video {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* === 水印（读者模式灯箱） === */
+.lightbox-watermark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-repeat: repeat;
+  pointer-events: none;
+  z-index: 1006;
+  opacity: 0.35;
+}
+
 .card-body {
   padding: 24px;
 }
@@ -267,6 +425,7 @@ nav a {
   line-height: 1.7;
 }
 
+/* === Lock 页面 === */
 .lock-screen {
   min-height: 100vh;
   display: flex;
