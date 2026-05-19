@@ -19,6 +19,80 @@ var uploadImageButton = document.getElementById("upload-image");
 var videoGrid = document.querySelector("#videos .grid");
 var imageGrid = document.querySelector("#images .grid");
 
+// === IndexedDB 持久化存储 ===
+var DB_NAME = "portfolio-works";
+var DB_VERSION = 1;
+var STORE_NAME = "works";
+
+function openDB() {
+  return new Promise(function (resolve, reject) {
+    var request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = function (e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = function (e) { resolve(e.target.result); };
+    request.onerror = function (e) { reject(e.target.error); };
+  });
+}
+
+function saveWorkToDB(work) {
+  return openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(work);
+    return new Promise(function (resolve) {
+      tx.oncomplete = function () { resolve(); };
+    });
+  });
+}
+
+function loadAllWorksFromDB() {
+  return openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readonly");
+    var request = tx.objectStore(STORE_NAME).getAll();
+    return new Promise(function (resolve, reject) {
+      request.onsuccess = function () { resolve(request.result || []); };
+      request.onerror = function () { reject(request.error); };
+    });
+  });
+}
+
+function deleteWorkFromDB(id) {
+  return openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).delete(id);
+    return new Promise(function (resolve) {
+      tx.oncomplete = function () { resolve(); };
+    });
+  });
+}
+
+function updateWorkInDB(id, updates) {
+  return openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readwrite");
+    var store = tx.objectStore(STORE_NAME);
+    var getReq = store.get(id);
+    return new Promise(function (resolve, reject) {
+      getReq.onsuccess = function () {
+        var work = getReq.result;
+        if (!work) return reject(new Error("Work not found"));
+        Object.keys(updates).forEach(function (key) {
+          work[key] = updates[key];
+        });
+        store.put(work);
+        tx.oncomplete = function () { resolve(); };
+      };
+      getReq.onerror = function () { reject(getReq.error); };
+    });
+  });
+}
+
+function generateWorkId() {
+  return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+
 // === 设备指纹 ===
 function generateDeviceFingerprint() {
   var components = [
@@ -130,7 +204,46 @@ function authorizePage() {
     bodyElement.classList.add("visible");
   }
 
-  initAllCards();
+  // 先渲染持久化的作品，再初始化所有卡片
+  renderPersistedWorks().then(function () {
+    initAllCards();
+  });
+}
+
+// === 从 IndexedDB 渲染已保存的作品 ===
+function renderPersistedWorks() {
+  return loadAllWorksFromDB().then(function (works) {
+    if (!works.length) return;
+    works.sort(function (a, b) { return b.createdAt - a.createdAt; });
+    works.forEach(function (work) {
+      renderWorkCard(work);
+    });
+  });
+}
+
+function renderWorkCard(work) {
+  var url = URL.createObjectURL(work.fileData);
+  var mediaHTML;
+  if (work.type === "video") {
+    mediaHTML = '<div class="video-preview"><video controls src="' + url + '" preload="metadata"></video></div>';
+  } else {
+    mediaHTML = '<img src="' + url + '" alt="' + (work.title || work.fileName) + '" />';
+  }
+  var card = document.createElement("article");
+  card.className = "card";
+  card.setAttribute("data-work-id", work.id);
+  card.innerHTML =
+    '<div class="card-media">' + mediaHTML + '</div>' +
+    '<div class="card-body">' +
+    '<h3>' + (work.title || work.fileName) + '</h3>' +
+    '<p>' + (work.description || "") + '</p>' +
+    '</div>';
+
+  if (work.type === "video" && videoGrid) {
+    videoGrid.appendChild(card);
+  } else if (work.type === "image" && imageGrid) {
+    imageGrid.appendChild(card);
+  }
 }
 
 // === 灯箱 ===
@@ -180,7 +293,6 @@ function openLightbox(mediaEl) {
     return;
   }
 
-  // 读者模式添加水印
   if (!gIsAuthor) {
     var watermark = document.createElement("div");
     watermark.className = "lightbox-watermark";
@@ -210,7 +322,6 @@ function createSettingsMenu(card) {
   var cardMedia = card.querySelector(".card-media");
   if (!cardMedia) return;
 
-  // 移除旧图标和菜单
   var oldIcon = cardMedia.querySelector(".card-settings");
   if (oldIcon) oldIcon.remove();
   var oldMenu = cardMedia.querySelector(".settings-menu");
@@ -218,14 +329,12 @@ function createSettingsMenu(card) {
 
   if (!gIsAuthor) return;
 
-  // 设置图标
   var icon = document.createElement("button");
   icon.className = "card-settings";
   icon.innerHTML = "&#x2699;";
   icon.title = "设置";
   cardMedia.appendChild(icon);
 
-  // 下拉菜单
   var menu = document.createElement("div");
   menu.className = "settings-menu";
 
@@ -259,7 +368,6 @@ function createSettingsMenu(card) {
   menu.appendChild(deleteBtn);
   cardMedia.appendChild(menu);
 
-  // 图标点击：切换菜单
   icon.addEventListener("click", function (e) {
     e.stopPropagation();
     var allMenus = document.querySelectorAll(".settings-menu.visible");
@@ -268,7 +376,6 @@ function createSettingsMenu(card) {
   });
 }
 
-// 点击页面其他地方关闭所有菜单
 document.addEventListener("click", function () {
   var allMenus = document.querySelectorAll(".settings-menu.visible");
   allMenus.forEach(function (m) { m.classList.remove("visible"); });
@@ -284,8 +391,11 @@ function refreshCardSettings() {
 
 // === 删除作品 ===
 function deleteWork(card) {
-  if (confirm("确定要删除这个作品吗？此操作不可撤销。")) {
-    card.remove();
+  if (!confirm("确定要删除这个作品吗？此操作不可撤销。")) return;
+  var workId = card.getAttribute("data-work-id");
+  card.remove();
+  if (workId) {
+    deleteWorkFromDB(workId).catch(function () {});
   }
 }
 
@@ -297,7 +407,6 @@ function setCardEditable(card, enabled) {
   if (desc) desc.contentEditable = enabled ? "true" : "false";
 }
 
-// === 修改作品（聚焦标题） ===
 function editWork(card) {
   var title = card.querySelector(".card-body h3");
   if (title) {
@@ -337,11 +446,28 @@ function changeCover(card) {
       }
     }
 
-    // 更新灯箱数据
+    // 更新 IndexedDB 中的文件数据
+    var workId = card.getAttribute("data-work-id");
+    if (workId) {
+      updateWorkInDB(workId, { fileData: file, fileName: file.name }).catch(function () {});
+    }
+
     bindCardLightbox(card);
   });
 
   input.click();
+}
+
+// === 编辑内容持久化 ===
+function persistCardEdit(card) {
+  var workId = card.getAttribute("data-work-id");
+  if (!workId) return;
+  var title = card.querySelector(".card-body h3");
+  var desc = card.querySelector(".card-body p");
+  updateWorkInDB(workId, {
+    title: title ? title.textContent : "",
+    description: desc ? desc.textContent : ""
+  }).catch(function () {});
 }
 
 // === 灯箱绑定 ===
@@ -349,14 +475,11 @@ function bindCardLightbox(card) {
   var cardMedia = card.querySelector(".card-media");
   if (!cardMedia) return;
 
-  // 移除旧事件（通过克隆）
   var newMedia = cardMedia.cloneNode(true);
   cardMedia.parentNode.replaceChild(newMedia, cardMedia);
 
-  // 重新创建设置菜单
   createSettingsMenu(card);
 
-  // 绑定灯箱：点击 card-media（非设置区域）打开灯箱
   newMedia.addEventListener("click", function (e) {
     if (e.target.closest(".card-settings") || e.target.closest(".settings-menu")) {
       return;
@@ -377,15 +500,12 @@ function initAllCards() {
   });
 }
 
-// 兼容旧卡片结构：自动包裹 card-media
 function ensureCardMedia(card) {
   if (card.querySelector(".card-media")) return;
 
   var media = card.querySelector(".video-preview") || card.querySelector("img");
   if (!media) return;
 
-  var firstChild = card.firstElementChild;
-  // 收集 card-body 之前的所有元素
   var wrapper = document.createElement("div");
   wrapper.className = "card-media";
 
@@ -395,35 +515,61 @@ function ensureCardMedia(card) {
   card.insertBefore(wrapper, card.firstElementChild);
 }
 
-// === 作品上传（更新版：包含 card-media 包裹和设置图标） ===
-function addWorkCard(mediaHTML, title, description) {
+// === 作品上传（持久化到 IndexedDB） ===
+function addVideoWork(file) {
+  if (!videoGrid) return;
+  var workId = generateWorkId();
+  var url = URL.createObjectURL(file);
+  var mediaHTML = '<div class="video-preview"><video controls src="' + url + '" preload="metadata"></video></div>';
   var card = document.createElement("article");
   card.className = "card";
+  card.setAttribute("data-work-id", workId);
   card.innerHTML =
     '<div class="card-media">' + mediaHTML + '</div>' +
     '<div class="card-body">' +
-    '<h3>' + title + '</h3>' +
-    '<p>' + description + '</p>' +
+    '<h3>' + file.name + '</h3>' +
+    '<p>已上传的视频作品。</p>' +
     '</div>';
-  return card;
-}
-
-function addVideoWork(file) {
-  if (!videoGrid) return;
-  var url = URL.createObjectURL(file);
-  var mediaHTML = '<div class="video-preview"><video controls src="' + url + '" preload="metadata"></video></div>';
-  var card = addWorkCard(mediaHTML, file.name, "已上传的视频作品。");
   videoGrid.prepend(card);
   initSingleCard(card);
+
+  saveWorkToDB({
+    id: workId,
+    type: "video",
+    fileName: file.name,
+    fileData: file,
+    title: file.name,
+    description: "已上传的视频作品。",
+    createdAt: Date.now()
+  }).catch(function () {});
 }
 
 function addImageWork(file, title, description) {
   if (!imageGrid) return;
+  var workId = generateWorkId();
   var url = URL.createObjectURL(file);
   var mediaHTML = '<img src="' + url + '" alt="' + (title || file.name) + '" />';
-  var card = addWorkCard(mediaHTML, title || file.name, description || "已上传的图文作品。");
+  var card = document.createElement("article");
+  card.className = "card";
+  card.setAttribute("data-work-id", workId);
+  card.innerHTML =
+    '<div class="card-media">' + mediaHTML + '</div>' +
+    '<div class="card-body">' +
+    '<h3>' + (title || file.name) + '</h3>' +
+    '<p>' + (description || "已上传的图文作品。") + '</p>' +
+    '</div>';
   imageGrid.prepend(card);
   initSingleCard(card);
+
+  saveWorkToDB({
+    id: workId,
+    type: "image",
+    fileName: file.name,
+    fileData: file,
+    title: title || file.name,
+    description: description || "已上传的图文作品。",
+    createdAt: Date.now()
+  }).catch(function () {});
 }
 
 function initSingleCard(card) {
@@ -476,6 +622,9 @@ document.addEventListener("focusin", function (e) {
 document.addEventListener("focusout", function (e) {
   if (e.target.closest(".card-body") && e.target.isContentEditable) {
     e.target.classList.remove("editing");
+    // 持久化编辑内容到 IndexedDB
+    var card = e.target.closest(".card");
+    if (card) persistCardEdit(card);
   }
 });
 
