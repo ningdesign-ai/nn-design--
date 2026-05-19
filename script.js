@@ -225,7 +225,7 @@ function renderWorkCard(work) {
   var url = URL.createObjectURL(work.fileData);
   var mediaHTML;
   if (work.type === "video") {
-    mediaHTML = '<div class="video-preview"><video controls src="' + url + '" preload="metadata"></video></div>';
+    mediaHTML = '<div class="video-preview"><video src="' + url + '" preload="metadata" muted></video></div>';
   } else {
     mediaHTML = '<img src="' + url + '" alt="' + (work.title || work.fileName) + '" />';
   }
@@ -520,7 +520,7 @@ function addVideoWork(file) {
   if (!videoGrid) return;
   var workId = generateWorkId();
   var url = URL.createObjectURL(file);
-  var mediaHTML = '<div class="video-preview"><video controls src="' + url + '" preload="metadata"></video></div>';
+  var mediaHTML = '<div class="video-preview"><video src="' + url + '" preload="metadata" muted></video></div>';
   var card = document.createElement("article");
   card.className = "card";
   card.setAttribute("data-work-id", workId);
