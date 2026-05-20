@@ -211,6 +211,11 @@ nav a {
   display: block;
 }
 
+.card-media > img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
 .video-preview {
   background: #000;
   color: #fff;
