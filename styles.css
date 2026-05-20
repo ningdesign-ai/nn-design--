@@ -94,8 +94,8 @@ nav a {
 
 .footer-banner {
   width: 100%;
-  aspect-ratio: 4 / 1;
-  min-height: 200px;
+  aspect-ratio: 5 / 2;
+  min-height: 250px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
