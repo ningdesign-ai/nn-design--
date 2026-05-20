@@ -559,8 +559,10 @@ function renderPersistedWorks() {
         }
         allProjects[work.id] = work;
         renderProjectCard(work);
-      } else {
-        renderWorkCard(work);
+      }
+      // 视频全部由 HTML 源文件管理，自动清理旧 IndexedDB 视频数据
+      if (work.type === "video") {
+        deleteWorkFromDB(work.id).catch(function () {});
       }
     });
   });
