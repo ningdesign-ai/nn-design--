@@ -978,6 +978,7 @@ function openLightbox(mediaEl) {
   if (videoEl) {
     var clonedVideo = videoEl.cloneNode(true);
     clonedVideo.controls = true;
+    clonedVideo.playsInline = true;
     clonedVideo.style.maxWidth = "90vw";
     clonedVideo.style.maxHeight = "90vh";
     content.appendChild(clonedVideo);
