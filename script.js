@@ -1275,37 +1275,143 @@ function ensureCardMedia(card) {
   card.insertBefore(wrapper, card.firstElementChild);
 }
 
-// === 作品上传（持久化到 IndexedDB） ===
+// === 视频压缩（保留画质，减小体积） ===
+function needsCompression(file) {
+  // 小于 20MB 的视频不压缩
+  return file.size > 20 * 1024 * 1024;
+}
+
+function compressVideo(file, callback, errorCallback) {
+  if (!file.type.startsWith("video/")) {
+    errorCallback(new Error("Not a video"));
+    return;
+  }
+  if (!needsCompression(file)) {
+    callback(file);
+    return;
+  }
+
+  var video = document.createElement("video");
+  video.src = URL.createObjectURL(file);
+  video.muted = true;
+  video.preload = "metadata";
+
+  video.addEventListener("loadedmetadata", function () {
+    var canvas = document.createElement("canvas");
+    var maxW = 1280;
+    var scale = Math.min(1, maxW / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    var ctx = canvas.getContext("2d");
+
+    var stream;
+    try {
+      stream = canvas.captureStream(30);
+    } catch (e) {
+      errorCallback(e);
+      return;
+    }
+
+    var mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+      ? "video/webm;codecs=vp9"
+      : "video/webm;codecs=vp8";
+
+    var recorder;
+    try {
+      recorder = new MediaRecorder(stream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 2000000
+      });
+    } catch (e) {
+      errorCallback(e);
+      return;
+    }
+
+    var chunks = [];
+    recorder.ondataavailable = function (e) {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+    recorder.onstop = function () {
+      var blob = new Blob(chunks, { type: mimeType });
+      var compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, ".webm"), { type: mimeType });
+      callback(compressedFile);
+    };
+
+    video.currentTime = 0;
+    video.play().then(function () {
+      recorder.start();
+      var drawFrame = function () {
+        if (video.paused || video.ended) return;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        requestAnimationFrame(drawFrame);
+      };
+      requestAnimationFrame(drawFrame);
+
+      var checkEnd = setInterval(function () {
+        if (video.currentTime >= video.duration - 0.1) {
+          clearInterval(checkEnd);
+          recorder.stop();
+          video.pause();
+        }
+      }, 500);
+    }).catch(function (e) {
+      errorCallback(e);
+    });
+  });
+
+  video.addEventListener("error", function () {
+    errorCallback(new Error("Video load failed"));
+  });
+}
+
 function addVideoWork(file) {
   if (!videoGrid) return;
   var workId = generateWorkId();
-  var url = URL.createObjectURL(file);
-  var mediaHTML = '<div class="video-preview"><video src="' + url + '" preload="metadata" muted></video></div>';
-  var card = document.createElement("article");
-  card.className = "card";
-  card.setAttribute("data-work-id", workId);
-  card.innerHTML =
-    '<div class="card-media">' + mediaHTML + '</div>' +
-    '<div class="card-body">' +
-    '<h3>' + file.name + '</h3>' +
-    '<p>已上传的视频作品。</p>' +
-    '</div>';
-  videoGrid.prepend(card);
-  initSingleCard(card);
+  var compressing = needsCompression(file);
 
-  saveWorkToDB({
-    id: workId,
-    type: "video",
-    fileName: file.name,
-    fileData: file,
-    title: file.name,
-    description: "已上传的视频作品。",
-    createdAt: Date.now()
-  }).then(function () {
-    window.alert("视频「" + file.name + "」已保存成功。");
-  }).catch(function () {
-    window.alert("保存失败，请重试。");
-  });
+  if (compressing) {
+    window.alert("视频较大，正在自动压缩中（保持画质，减小体积）……压缩完成后将提示保存成功，请耐心等待。");
+  }
+
+  function doAdd(finalFile) {
+    var url = URL.createObjectURL(finalFile);
+    var mediaHTML = '<div class="video-preview"><video src="' + url + '" preload="metadata" muted></video></div>';
+    var card = document.createElement("article");
+    card.className = "card";
+    card.setAttribute("data-work-id", workId);
+    card.innerHTML =
+      '<div class="card-media">' + mediaHTML + '</div>' +
+      '<div class="card-body">' +
+      '<h3>' + file.name + '</h3>' +
+      '<p>' + (compressing ? "已压缩上传的视频作品。" : "已上传的视频作品。") + '</p>' +
+      '</div>';
+    videoGrid.prepend(card);
+    initSingleCard(card);
+
+    saveWorkToDB({
+      id: workId,
+      type: "video",
+      fileName: finalFile.name,
+      fileData: finalFile,
+      title: file.name,
+      description: (compressing ? "已压缩上传的视频作品。" : "已上传的视频作品。"),
+      createdAt: Date.now()
+    }).then(function () {
+      window.alert("视频「" + file.name + "」已保存成功。" + (compressing ? "已自动压缩。" : ""));
+    }).catch(function () {
+      window.alert("保存失败，请重试。");
+    });
+  }
+
+  if (compressing) {
+    compressVideo(file, doAdd, function () {
+      // 压缩失败，使用原文件
+      window.alert("自动压缩失败，将保存原文件。");
+      doAdd(file);
+    });
+  } else {
+    doAdd(file);
+  }
 }
 
 function initSingleCard(card) {
