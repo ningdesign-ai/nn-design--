@@ -248,12 +248,13 @@ function renderProjectCard(project) {
     coverUrl = project.images[0].url;
   }
   if (!coverUrl) return;
+  var coverPos = project.coverPosition != null ? project.coverPosition : 50;
   var card = document.createElement("article");
   card.className = "card project-card";
   card.setAttribute("data-project-id", project.id);
   card.innerHTML =
     '<div class="card-media">' +
-    '<img src="' + coverUrl + '" alt="' + (project.title || "") + '" />' +
+    '<img src="' + coverUrl + '" alt="' + (project.title || "") + '" style="object-position: 50% ' + coverPos + '%;" />' +
     '</div>' +
     '<div class="card-body">' +
     '<h3>' + (project.title || "") + '</h3>' +
@@ -509,7 +510,10 @@ function refreshProjectCard(projectId) {
   var coverUrl = project.images && project.images.length ? project.images[0].url : "";
   if (coverUrl) {
     var img = card.querySelector(".card-media img");
-    if (img) img.src = coverUrl;
+    if (img) {
+      img.src = coverUrl;
+      img.style.objectPosition = "50% " + (project.coverPosition != null ? project.coverPosition : 50) + "%";
+    }
   }
   var h3 = card.querySelector(".card-body h3");
   if (h3) h3.textContent = project.title || "";
@@ -616,6 +620,96 @@ function closeLightbox() {
   document.body.style.overflow = "";
 }
 
+// === 封面裁切 ===
+function openCoverCrop(card) {
+  var projectId = card.getAttribute("data-project-id");
+  var project = allProjects[projectId];
+  if (!project) return;
+
+  var coverUrl = project.coverUrl || (project.images && project.images.length ? project.images[0].url : null);
+  if (!coverUrl) return;
+
+  var currentPos = project.coverPosition != null ? project.coverPosition : 50;
+
+  var overlay = document.createElement("div");
+  overlay.className = "crop-overlay";
+
+  var dialog = document.createElement("div");
+  dialog.className = "crop-dialog";
+
+  dialog.innerHTML =
+    '<h3>调整封面裁切</h3>' +
+    '<p class="crop-hint">拖动滑块调整图片可见区域</p>';
+
+  // 16:9 预览框
+  var previewBox = document.createElement("div");
+  previewBox.className = "crop-preview";
+  var previewImg = document.createElement("img");
+  previewImg.src = coverUrl;
+  previewImg.style.objectPosition = "50% " + currentPos + "%";
+  previewBox.appendChild(previewImg);
+
+  // 滑块
+  var sliderRow = document.createElement("div");
+  sliderRow.className = "crop-slider-row";
+  var slider = document.createElement("input");
+  slider.type = "range";
+  slider.min = 0;
+  slider.max = 100;
+  slider.value = currentPos;
+  slider.className = "crop-slider";
+
+  var posLabel = document.createElement("span");
+  posLabel.className = "crop-pos-label";
+  posLabel.textContent = currentPos + "%";
+  sliderRow.appendChild(slider);
+  sliderRow.appendChild(posLabel);
+
+  slider.addEventListener("input", function () {
+    var val = parseInt(slider.value, 10);
+    previewImg.style.objectPosition = "50% " + val + "%";
+    posLabel.textContent = val + "%";
+  });
+
+  // 按钮
+  var btnRow = document.createElement("div");
+  btnRow.className = "crop-btn-row";
+
+  var cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "取消";
+  cancelBtn.addEventListener("click", function () {
+    overlay.remove();
+  });
+
+  var okBtn = document.createElement("button");
+  okBtn.textContent = "确定";
+  okBtn.className = "crop-ok-btn";
+  okBtn.addEventListener("click", function () {
+    var val = parseInt(slider.value, 10);
+    project.coverPosition = val;
+    allProjects[projectId] = project;
+    persistProjectToDB(projectId);
+    // 更新卡片上的 object-position
+    var cardImg = card.querySelector(".card-media > img");
+    if (cardImg) cardImg.style.objectPosition = "50% " + val + "%";
+    overlay.remove();
+  });
+
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(okBtn);
+
+  dialog.appendChild(previewBox);
+  dialog.appendChild(sliderRow);
+  dialog.appendChild(btnRow);
+  overlay.appendChild(dialog);
+
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
+}
+
 // === 设置菜单 ===
 function createSettingsMenu(card) {
   var cardMedia = card.querySelector(".card-media");
@@ -653,6 +747,18 @@ function createSettingsMenu(card) {
     menu.classList.remove("visible");
   });
 
+  var cropBtn = null;
+  // 图文项目才显示封面裁切
+  if (card.classList.contains("project-card")) {
+    cropBtn = document.createElement("button");
+    cropBtn.textContent = "封面裁切";
+    cropBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openCoverCrop(card);
+      menu.classList.remove("visible");
+    });
+  }
+
   var deleteBtn = document.createElement("button");
   deleteBtn.textContent = "删除作品";
   deleteBtn.className = "danger";
@@ -664,6 +770,7 @@ function createSettingsMenu(card) {
 
   menu.appendChild(editBtn);
   menu.appendChild(coverBtn);
+  if (cropBtn) menu.appendChild(cropBtn);
   menu.appendChild(deleteBtn);
   cardMedia.appendChild(menu);
 
