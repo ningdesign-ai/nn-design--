@@ -460,8 +460,8 @@ function authorizePage() {
   }
 
   // 先渲染持久化的作品，再初始化所有卡片
-  loadBannerFromDB().then(function () {
-    return loadFooterBannerFromDB();
+  loadBannerFromDB().catch(function () {}).then(function () {
+    return loadFooterBannerFromDB().catch(function () {});
   }).then(function () {
     return renderPersistedWorks();
   }).then(function () {
