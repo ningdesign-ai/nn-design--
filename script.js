@@ -571,10 +571,6 @@ function authorizePage() {
 
   setAuthorMode(isAuthor);
 
-  if (bodyElement) {
-    bodyElement.classList.add("visible");
-  }
-
   // 应用本地编辑（刷新不丢失），再渲染作品
   applyLocalEdits();
   loadBannerFromDB().catch(function () {}).then(function () {
