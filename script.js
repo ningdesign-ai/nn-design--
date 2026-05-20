@@ -110,7 +110,17 @@ function loadBannerFromDB() {
         var data = req.result;
         if (data && data.fileData) {
           var url = URL.createObjectURL(data.fileData);
-          if (heroBanner) heroBanner.style.backgroundImage = "url(" + url + ")";
+          if (heroBanner) {
+            heroBanner.style.backgroundImage = "url(" + url + ")";
+            if (data.bannerPosition != null) {
+              heroBanner.style.backgroundPosition = "50% " + data.bannerPosition + "%";
+            }
+            if (data.bannerZoom != null && data.bannerZoom > 1) {
+              heroBanner.style.backgroundSize = (data.bannerZoom * 100) + "%";
+            } else {
+              heroBanner.style.backgroundSize = "cover";
+            }
+          }
         }
         resolve();
       };
@@ -119,21 +129,133 @@ function loadBannerFromDB() {
   });
 }
 
-function saveBanner(file) {
-  return saveWorkToDB({
-    id: "site-banner",
-    type: "banner",
-    fileData: file
-  }).then(function () {
+function saveBanner(file, bannerPos, bannerZoom) {
+  var record = { id: "site-banner", type: "banner", fileData: file };
+  if (bannerPos != null) record.bannerPosition = bannerPos;
+  if (bannerZoom != null) record.bannerZoom = bannerZoom;
+  return saveWorkToDB(record).then(function () {
     var url = URL.createObjectURL(file);
-    if (heroBanner) heroBanner.style.backgroundImage = "url(" + url + ")";
+    if (heroBanner) {
+      heroBanner.style.backgroundImage = "url(" + url + ")";
+      if (bannerPos != null) heroBanner.style.backgroundPosition = "50% " + bannerPos + "%";
+      if (bannerZoom != null && bannerZoom > 1) {
+        heroBanner.style.backgroundSize = (bannerZoom * 100) + "%";
+      } else {
+        heroBanner.style.backgroundSize = "cover";
+      }
+    }
   });
 }
 
 function removeBanner() {
   deleteWorkFromDB("site-banner").then(function () {
-    if (heroBanner) heroBanner.style.backgroundImage = "";
+    if (heroBanner) {
+      heroBanner.style.backgroundImage = "";
+      heroBanner.style.backgroundPosition = "";
+      heroBanner.style.backgroundSize = "";
+    }
   }).catch(function () {});
+}
+
+function openBannerCrop(file) {
+  var url = URL.createObjectURL(file);
+  var overlay = document.createElement("div");
+  overlay.className = "crop-overlay";
+
+  var dialog = document.createElement("div");
+  dialog.className = "crop-dialog banner-crop-dialog";
+
+  var title = document.createElement("h3");
+  title.textContent = "调整 Banner 裁切";
+  var hint = document.createElement("p");
+  hint.className = "crop-hint";
+  hint.textContent = "拖动滑块调整可见区域和缩放比例";
+
+  var previewBox = document.createElement("div");
+  previewBox.className = "banner-crop-preview";
+  var previewImg = document.createElement("img");
+  previewImg.src = url;
+
+  function applyPreview(pos, zoom) {
+    previewImg.style.objectPosition = "50% " + pos + "%";
+    previewImg.style.transform = "scale(" + zoom + ")";
+    previewImg.style.transformOrigin = "50% 50%";
+  }
+  applyPreview(50, 1);
+
+  previewBox.appendChild(previewImg);
+
+  // 位置滑块
+  var posRow = document.createElement("div");
+  posRow.className = "crop-slider-row";
+  var posLabel = document.createElement("span");
+  posLabel.className = "crop-slider-label";
+  posLabel.textContent = "位置";
+  var posSlider = document.createElement("input");
+  posSlider.type = "range"; posSlider.min = 0; posSlider.max = 100; posSlider.value = 50;
+  posSlider.className = "crop-slider";
+  var posVal = document.createElement("span");
+  posVal.className = "crop-pos-label"; posVal.textContent = "50%";
+  posRow.appendChild(posLabel); posRow.appendChild(posSlider); posRow.appendChild(posVal);
+
+  posSlider.addEventListener("input", function () {
+    var val = parseInt(posSlider.value, 10);
+    applyPreview(val, parseFloat(zoomSlider.value));
+    posVal.textContent = val + "%";
+  });
+
+  // 缩放滑块
+  var zoomRow = document.createElement("div");
+  zoomRow.className = "crop-slider-row";
+  var zoomLabel = document.createElement("span");
+  zoomLabel.className = "crop-slider-label";
+  zoomLabel.textContent = "缩放";
+  var zoomSlider = document.createElement("input");
+  zoomSlider.type = "range"; zoomSlider.min = 1; zoomSlider.max = 3; zoomSlider.step = 0.05; zoomSlider.value = 1;
+  zoomSlider.className = "crop-slider";
+  var zoomVal = document.createElement("span");
+  zoomVal.className = "crop-pos-label"; zoomVal.textContent = "1x";
+  zoomRow.appendChild(zoomLabel); zoomRow.appendChild(zoomSlider); zoomRow.appendChild(zoomVal);
+
+  zoomSlider.addEventListener("input", function () {
+    var val = parseFloat(zoomSlider.value);
+    applyPreview(parseInt(posSlider.value, 10), val);
+    zoomVal.textContent = val.toFixed(2) + "x";
+  });
+
+  var btnRow = document.createElement("div");
+  btnRow.className = "crop-btn-row";
+
+  var cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "取消";
+  cancelBtn.addEventListener("click", function () { overlay.remove(); });
+
+  var okBtn = document.createElement("button");
+  okBtn.textContent = "确定";
+  okBtn.className = "crop-ok-btn";
+  okBtn.addEventListener("click", function () {
+    var pos = parseInt(posSlider.value, 10);
+    var zoom = parseFloat(zoomSlider.value);
+    saveBanner(file, pos, zoom).catch(function () {});
+    overlay.remove();
+  });
+
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(okBtn);
+
+  dialog.appendChild(title);
+  dialog.appendChild(hint);
+  dialog.appendChild(previewBox);
+  dialog.appendChild(posRow);
+  dialog.appendChild(zoomRow);
+  dialog.appendChild(btnRow);
+  overlay.appendChild(dialog);
+
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function uploadBanner() {
@@ -141,7 +263,7 @@ function uploadBanner() {
     window.alert("请选择一张图片。");
     return;
   }
-  saveBanner(bannerFileInput.files[0]).catch(function () {});
+  openBannerCrop(bannerFileInput.files[0]);
   bannerFileInput.value = "";
 }
 
