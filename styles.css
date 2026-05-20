@@ -82,28 +82,27 @@ nav a {
 }
 
 .hero {
-  padding: 72px 40px 40px;
+  padding: 100px 40px 60px;
+  max-width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #e8e8e8;
+  position: relative;
+}
+
+.hero > div {
   max-width: 920px;
   margin: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .eyebrow {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 14px;
   letter-spacing: 0.24em;
   color: #888;
-}
-
-.hero h1 {
-  margin: 0 0 16px;
-  font-size: clamp(2rem, 4vw, 4rem);
-  line-height: 1.05;
-}
-
-.hero p {
-  max-width: 640px;
-  line-height: 1.8;
-  color: #555;
 }
 
 .section {
@@ -186,6 +185,18 @@ nav a {
   color: #fff;
   font-size: 15px;
   cursor: pointer;
+}
+
+.banner-remove-btn {
+  background: transparent !important;
+  color: #999 !important;
+  border: 1px solid #ddd !important;
+  margin-top: 8px;
+}
+
+.banner-remove-btn:hover {
+  color: #d85656 !important;
+  border-color: #d85656 !important;
 }
 
 /* === 作品卡片 === */

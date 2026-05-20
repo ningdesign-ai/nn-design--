@@ -17,6 +17,10 @@ var projectImagesInput = document.getElementById("project-images");
 var projectTimelineInput = document.getElementById("project-timeline");
 var projectContentInput = document.getElementById("project-content");
 var projectResultsInput = document.getElementById("project-results");
+var bannerFileInput = document.getElementById("banner-file");
+var uploadBannerButton = document.getElementById("upload-banner");
+var removeBannerButton = document.getElementById("remove-banner");
+var heroBanner = document.getElementById("hero-banner");
 var uploadVideoButton = document.getElementById("upload-video");
 var uploadProjectButton = document.getElementById("upload-project");
 var videoGrid = document.querySelector("#videos .grid");
@@ -94,6 +98,51 @@ function updateWorkInDB(id, updates) {
 
 function generateWorkId() {
   return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+
+// === Banner 背景 ===
+function loadBannerFromDB() {
+  return openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readonly");
+    var req = tx.objectStore(STORE_NAME).get("site-banner");
+    return new Promise(function (resolve) {
+      req.onsuccess = function () {
+        var data = req.result;
+        if (data && data.fileData) {
+          var url = URL.createObjectURL(data.fileData);
+          if (heroBanner) heroBanner.style.backgroundImage = "url(" + url + ")";
+        }
+        resolve();
+      };
+      req.onerror = function () { resolve(); };
+    });
+  });
+}
+
+function saveBanner(file) {
+  return saveWorkToDB({
+    id: "site-banner",
+    type: "banner",
+    fileData: file
+  }).then(function () {
+    var url = URL.createObjectURL(file);
+    if (heroBanner) heroBanner.style.backgroundImage = "url(" + url + ")";
+  });
+}
+
+function removeBanner() {
+  deleteWorkFromDB("site-banner").then(function () {
+    if (heroBanner) heroBanner.style.backgroundImage = "";
+  }).catch(function () {});
+}
+
+function uploadBanner() {
+  if (!bannerFileInput || !bannerFileInput.files.length) {
+    window.alert("请选择一张图片。");
+    return;
+  }
+  saveBanner(bannerFileInput.files[0]).catch(function () {});
+  bannerFileInput.value = "";
 }
 
 // 内存缓存：IndexedDB 加载的项目数据
@@ -211,7 +260,9 @@ function authorizePage() {
   }
 
   // 先渲染持久化的作品，再初始化所有卡片
-  renderPersistedWorks().then(function () {
+  loadBannerFromDB().then(function () {
+    return renderPersistedWorks();
+  }).then(function () {
     initAllCards();
   });
 }
@@ -1137,6 +1188,8 @@ function getBaseUrl() {
 
 // === 事件绑定 ===
 if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
+if (uploadBannerButton) uploadBannerButton.addEventListener("click", uploadBanner);
+if (removeBannerButton) removeBannerButton.addEventListener("click", removeBanner);
 if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
 if (uploadProjectButton) uploadProjectButton.addEventListener("click", uploadProject);
 

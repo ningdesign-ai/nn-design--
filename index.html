@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
   <style>
     body.auth-check {
       visibility: hidden;
@@ -33,11 +33,9 @@
     </header>
 
     <main>
-      <section class="hero">
+      <section class="hero" id="hero-banner">
         <div>
-          <p class="eyebrow">个人作品集</p>
-          <h1>简约、清晰、白色调</h1>
-          <p>这里展示了我的视频作品和图文设计。点击页面内的链接即可浏览不同类型的作品。</p>
+          <p class="eyebrow">个人作品集-ai、视觉、设计</p>
         </div>
       </section>
 
@@ -47,6 +45,13 @@
           <h2>上传作品</h2>
         </div>
         <div class="upload-grid">
+          <div class="upload-card banner-upload-card">
+            <h3>更换顶部 Banner</h3>
+            <p>选择一张宽幅图片作为页面顶部背景，推荐尺寸 1920×600。</p>
+            <input id="banner-file" type="file" accept="image/*" />
+            <button id="upload-banner">更换 Banner</button>
+            <button id="remove-banner" class="banner-remove-btn">移除 Banner</button>
+          </div>
           <div class="upload-card">
             <h3>上传视频</h3>
             <p>选择一个视频文件，上传后会显示到“视频作品”区域。</p>
@@ -98,6 +103,6 @@
     </main>
   </div>
 
-  <script src="script.js?v=9"></script>
+  <script src="script.js?v=10"></script>
 </body>
 </html>
