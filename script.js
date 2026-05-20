@@ -560,8 +560,18 @@ function renderPersistedWorks() {
         allProjects[work.id] = work;
         renderProjectCard(work);
       }
-      // 视频全部由 HTML 源文件管理，自动清理旧 IndexedDB 视频数据
+      // 视频全部由 HTML 源文件管理：复制描述到 HTML 卡片，再清理 IndexedDB
       if (work.type === "video") {
+        var videoCards = document.querySelectorAll("#videos .card");
+        videoCards.forEach(function (card) {
+          var video = card.querySelector("video");
+          if (video && video.getAttribute("src") === work.fileName) {
+            var p = card.querySelector(".card-body p");
+            if (p && work.description) p.textContent = work.description;
+            var h3 = card.querySelector(".card-body h3");
+            if (h3 && work.title) h3.textContent = work.title;
+          }
+        });
         deleteWorkFromDB(work.id).catch(function () {});
       }
     });
