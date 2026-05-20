@@ -105,6 +105,14 @@ function generateWorkId() {
 }
 
 // === Banner 背景 ===
+function applyBannerToBody(url, pos, zoom) {
+  if (!bodyElement) return;
+  bodyElement.style.backgroundImage = url ? "url(" + url + ")" : "";
+  bodyElement.style.backgroundPosition = "50% " + (pos || 50) + "%";
+  bodyElement.style.backgroundSize = (zoom && zoom > 1) ? (zoom * 100) + "%" : (url ? "cover" : "");
+  bodyElement.style.backgroundRepeat = "no-repeat";
+}
+
 function loadBannerFromDB() {
   return openDB().then(function (db) {
     var tx = db.transaction(STORE_NAME, "readonly");
@@ -114,17 +122,7 @@ function loadBannerFromDB() {
         var data = req.result;
         if (data && data.fileData) {
           var url = URL.createObjectURL(data.fileData);
-          if (heroBanner) {
-            heroBanner.style.backgroundImage = "url(" + url + ")";
-            if (data.bannerPosition != null) {
-              heroBanner.style.backgroundPosition = "50% " + data.bannerPosition + "%";
-            }
-            if (data.bannerZoom != null && data.bannerZoom > 1) {
-              heroBanner.style.backgroundSize = (data.bannerZoom * 100) + "%";
-            } else {
-              heroBanner.style.backgroundSize = "cover";
-            }
-          }
+          applyBannerToBody(url, data.bannerPosition, data.bannerZoom);
         }
         resolve();
       };
@@ -133,21 +131,19 @@ function loadBannerFromDB() {
   });
 }
 
+function removeBanner() {
+  deleteWorkFromDB("site-banner").then(function () {
+    applyBannerToBody("", 50, null);
+  }).catch(function () {});
+}
+
 function saveBanner(file, bannerPos, bannerZoom) {
   var record = { id: "site-banner", type: "banner", fileData: file };
   if (bannerPos != null) record.bannerPosition = bannerPos;
   if (bannerZoom != null) record.bannerZoom = bannerZoom;
   return saveWorkToDB(record).then(function () {
     var url = URL.createObjectURL(file);
-    if (heroBanner) {
-      heroBanner.style.backgroundImage = "url(" + url + ")";
-      if (bannerPos != null) heroBanner.style.backgroundPosition = "50% " + bannerPos + "%";
-      if (bannerZoom != null && bannerZoom > 1) {
-        heroBanner.style.backgroundSize = (bannerZoom * 100) + "%";
-      } else {
-        heroBanner.style.backgroundSize = "cover";
-      }
-    }
+    applyBannerToBody(url, bannerPos != null ? bannerPos : 50, bannerZoom != null ? bannerZoom : 1);
   });
 }
 
@@ -248,6 +244,9 @@ function openBannerCrop(file, bannerId, targetEl) {
         targetEl.style.backgroundPosition = "50% " + pos + "%";
         targetEl.style.backgroundSize = zoom > 1 ? (zoom * 100) + "%" : "cover";
       }
+      if (bannerId === "site-banner") {
+        applyBannerToBody(u, pos, zoom);
+      }
     }).catch(function () {});
     overlay.remove();
   });
@@ -275,7 +274,7 @@ function uploadBanner() {
     window.alert("请选择一张图片。");
     return;
   }
-  openBannerCrop(bannerFileInput.files[0], "site-banner", heroBanner);
+  openBannerCrop(bannerFileInput.files[0], "site-banner", null);
   bannerFileInput.value = "";
 }
 
