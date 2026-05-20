@@ -873,8 +873,8 @@ nav a {
   }
 
   .grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
   .upload-card {
