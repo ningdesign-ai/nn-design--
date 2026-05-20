@@ -144,16 +144,6 @@ function saveBanner(file, bannerPos, bannerZoom) {
   });
 }
 
-function removeBanner() {
-  deleteWorkFromDB("site-banner").then(function () {
-    if (heroBanner) {
-      heroBanner.style.backgroundImage = "";
-      heroBanner.style.backgroundPosition = "";
-      heroBanner.style.backgroundSize = "";
-    }
-  }).catch(function () {});
-}
-
 function openBannerCrop(file, bannerId, targetEl) {
   var url = URL.createObjectURL(file);
   var overlay = document.createElement("div");
