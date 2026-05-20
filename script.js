@@ -20,7 +20,11 @@ var projectResultsInput = document.getElementById("project-results");
 var bannerFileInput = document.getElementById("banner-file");
 var uploadBannerButton = document.getElementById("upload-banner");
 var removeBannerButton = document.getElementById("remove-banner");
+var footerBannerFileInput = document.getElementById("footer-banner-file");
+var uploadFooterBannerBtn = document.getElementById("upload-footer-banner");
+var removeFooterBannerBtn = document.getElementById("remove-footer-banner");
 var heroBanner = document.getElementById("hero-banner");
+var footerBanner = document.getElementById("footer-banner");
 var uploadVideoButton = document.getElementById("upload-video");
 var uploadProjectButton = document.getElementById("upload-project");
 var videoGrid = document.querySelector("#videos .grid");
@@ -157,7 +161,7 @@ function removeBanner() {
   }).catch(function () {});
 }
 
-function openBannerCrop(file) {
+function openBannerCrop(file, bannerId, targetEl) {
   var url = URL.createObjectURL(file);
   var overlay = document.createElement("div");
   overlay.className = "crop-overlay";
@@ -236,7 +240,15 @@ function openBannerCrop(file) {
   okBtn.addEventListener("click", function () {
     var pos = parseInt(posSlider.value, 10);
     var zoom = parseFloat(zoomSlider.value);
-    saveBanner(file, pos, zoom).catch(function () {});
+    var record = { id: bannerId, type: "banner", fileData: file, bannerPosition: pos, bannerZoom: zoom };
+    saveWorkToDB(record).then(function () {
+      var u = URL.createObjectURL(file);
+      if (targetEl) {
+        targetEl.style.backgroundImage = "url(" + u + ")";
+        targetEl.style.backgroundPosition = "50% " + pos + "%";
+        targetEl.style.backgroundSize = zoom > 1 ? (zoom * 100) + "%" : "cover";
+      }
+    }).catch(function () {});
     overlay.remove();
   });
 
@@ -263,8 +275,74 @@ function uploadBanner() {
     window.alert("请选择一张图片。");
     return;
   }
-  openBannerCrop(bannerFileInput.files[0]);
+  openBannerCrop(bannerFileInput.files[0], "site-banner", heroBanner);
   bannerFileInput.value = "";
+}
+
+// === 底部 Banner ===
+function loadFooterBannerFromDB() {
+  return openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readonly");
+    var req = tx.objectStore(STORE_NAME).get("site-footer-banner");
+    return new Promise(function (resolve) {
+      req.onsuccess = function () {
+        var data = req.result;
+        if (data && data.fileData) {
+          var url = URL.createObjectURL(data.fileData);
+          if (footerBanner) {
+            footerBanner.style.backgroundImage = "url(" + url + ")";
+            if (data.bannerPosition != null) {
+              footerBanner.style.backgroundPosition = "50% " + data.bannerPosition + "%";
+            }
+            if (data.bannerZoom != null && data.bannerZoom > 1) {
+              footerBanner.style.backgroundSize = (data.bannerZoom * 100) + "%";
+            } else {
+              footerBanner.style.backgroundSize = "cover";
+            }
+          }
+        }
+        resolve();
+      };
+      req.onerror = function () { resolve(); };
+    });
+  });
+}
+
+function saveFooterBanner(file, pos, zoom) {
+  var record = { id: "site-footer-banner", type: "footer-banner", fileData: file };
+  if (pos != null) record.bannerPosition = pos;
+  if (zoom != null) record.bannerZoom = zoom;
+  return saveWorkToDB(record).then(function () {
+    var url = URL.createObjectURL(file);
+    if (footerBanner) {
+      footerBanner.style.backgroundImage = "url(" + url + ")";
+      if (pos != null) footerBanner.style.backgroundPosition = "50% " + pos + "%";
+      if (zoom != null && zoom > 1) {
+        footerBanner.style.backgroundSize = (zoom * 100) + "%";
+      } else {
+        footerBanner.style.backgroundSize = "cover";
+      }
+    }
+  });
+}
+
+function removeFooterBanner() {
+  deleteWorkFromDB("site-footer-banner").then(function () {
+    if (footerBanner) {
+      footerBanner.style.backgroundImage = "";
+      footerBanner.style.backgroundPosition = "";
+      footerBanner.style.backgroundSize = "";
+    }
+  }).catch(function () {});
+}
+
+function uploadFooterBanner() {
+  if (!footerBannerFileInput || !footerBannerFileInput.files.length) {
+    window.alert("请选择一张图片。");
+    return;
+  }
+  openBannerCrop(footerBannerFileInput.files[0], "site-footer-banner", footerBanner);
+  footerBannerFileInput.value = "";
 }
 
 // 内存缓存：IndexedDB 加载的项目数据
@@ -383,6 +461,8 @@ function authorizePage() {
 
   // 先渲染持久化的作品，再初始化所有卡片
   loadBannerFromDB().then(function () {
+    return loadFooterBannerFromDB();
+  }).then(function () {
     return renderPersistedWorks();
   }).then(function () {
     initAllCards();
@@ -1312,6 +1392,8 @@ function getBaseUrl() {
 if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
 if (uploadBannerButton) uploadBannerButton.addEventListener("click", uploadBanner);
 if (removeBannerButton) removeBannerButton.addEventListener("click", removeBanner);
+if (uploadFooterBannerBtn) uploadFooterBannerBtn.addEventListener("click", uploadFooterBanner);
+if (removeFooterBannerBtn) removeFooterBannerBtn.addEventListener("click", removeFooterBanner);
 if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
 if (uploadProjectButton) uploadProjectButton.addEventListener("click", uploadProject);
 

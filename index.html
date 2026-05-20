@@ -43,10 +43,17 @@
         <div class="upload-grid">
           <div class="upload-card banner-upload-card">
             <h3>更换顶部 Banner</h3>
-            <p>选择一张宽幅图片作为页面顶部背景，推荐尺寸 1920×600。</p>
+            <p>选择一张宽幅图片作为页面顶部背景。</p>
             <input id="banner-file" type="file" accept="image/*" />
-            <button id="upload-banner">更换 Banner</button>
-            <button id="remove-banner" class="banner-remove-btn">移除 Banner</button>
+            <button id="upload-banner">更换顶部 Banner</button>
+            <button id="remove-banner" class="banner-remove-btn">移除顶部 Banner</button>
+          </div>
+          <div class="upload-card banner-upload-card">
+            <h3>更换底部 Banner</h3>
+            <p>选择一张宽幅图片作为页面底部背景。</p>
+            <input id="footer-banner-file" type="file" accept="image/*" />
+            <button id="upload-footer-banner">更换底部 Banner</button>
+            <button id="remove-footer-banner" class="banner-remove-btn">移除底部 Banner</button>
           </div>
           <div class="upload-card">
             <h3>上传视频</h3>
@@ -97,8 +104,9 @@
         </div>
       </section>
     </main>
+    <footer class="footer-banner" id="footer-banner"></footer>
   </div>
 
-  <script src="script.js?v=11"></script>
+  <script src="script.js?v=12"></script>
 </body>
 </html>
