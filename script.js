@@ -585,11 +585,7 @@ function openProjectDetail(projectId) {
 
 function buildDetailImages(container, project, projectId) {
   container.innerHTML = "";
-  // 跳过封面图（index 0），封面只用于卡片展示；仅一张图时不跳过
-  var images = project.images || [];
-  var skipCover = images.length > 1;
-  images.forEach(function (img, index) {
-    if (skipCover && index === 0) return;
+  (project.images || []).forEach(function (img, index) {
 
     var wrapper = document.createElement("div");
     wrapper.className = "detail-image-wrapper";
@@ -606,7 +602,7 @@ function buildDetailImages(container, project, projectId) {
       var upBtn = document.createElement("button");
       upBtn.innerHTML = "&#8593;";
       upBtn.title = "上移";
-      upBtn.disabled = skipCover ? index <= 1 : index === 0;
+      upBtn.disabled = index === 0;
       upBtn.addEventListener("click", function () {
         reorderProjectImage(projectId, index, index - 1, container);
       });
