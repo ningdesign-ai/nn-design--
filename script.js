@@ -23,6 +23,7 @@ var removeBannerButton = document.getElementById("remove-banner");
 var footerBannerFileInput = document.getElementById("footer-banner-file");
 var uploadFooterBannerBtn = document.getElementById("upload-footer-banner");
 var removeFooterBannerBtn = document.getElementById("remove-footer-banner");
+var headerArea = document.getElementById("header-area");
 var heroBanner = document.getElementById("hero-banner");
 var footerBanner = document.getElementById("footer-banner");
 var uploadVideoButton = document.getElementById("upload-video");
@@ -106,11 +107,11 @@ function generateWorkId() {
 
 // === Banner 背景 ===
 function applyBannerToBody(url, pos, zoom) {
-  if (!siteContent) return;
-  siteContent.style.backgroundImage = url ? "url(" + url + ")" : "";
-  siteContent.style.backgroundPosition = "50% " + (pos || 50) + "%";
-  siteContent.style.backgroundSize = (zoom && zoom > 1) ? (zoom * 100) + "%" : (url ? "cover" : "");
-  siteContent.style.backgroundRepeat = "no-repeat";
+  if (!headerArea) return;
+  headerArea.style.backgroundImage = url ? "url(" + url + ")" : "";
+  headerArea.style.backgroundPosition = "50% " + (pos || 50) + "%";
+  headerArea.style.backgroundSize = (zoom && zoom > 1) ? (zoom * 100) + "%" : (url ? "cover" : "");
+  headerArea.style.backgroundRepeat = "no-repeat";
 }
 
 function loadBannerFromDB() {
