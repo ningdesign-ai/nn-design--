@@ -390,6 +390,12 @@ var hardcodedProjects = {
     { url: "风吹半夏活动页/14.png", fileName: "14.png" },
     { url: "风吹半夏活动页/风吹半夏.png", fileName: "风吹半夏.png" }
   ]},
+  "proj-10": { id: "proj-10", title: "ui视觉作品", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "ui视觉作品/WX20260323-213330@2x.png", fileName: "WX20260323-213330@2x.png" },
+    { url: "ui视觉作品/成稿.png", fileName: "成稿.png" },
+    { url: "ui视觉作品/效果1.png", fileName: "效果1.png" },
+    { url: "ui视觉作品/效果2.png", fileName: "效果2.png" }
+  ]},
   "proj-9": { id: "proj-9", title: "龙年台历", brief: "", timeline: "", content: "", results: "", images: [
     { url: "龙年台历/1.png", fileName: "1.png" },
     { url: "龙年台历/3.png", fileName: "3.png" },
