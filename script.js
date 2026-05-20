@@ -11,12 +11,6 @@ var authorBadge = document.getElementById("author-badge");
 var deauthButton = document.getElementById("deauthorize-device");
 
 var videoFileInput = document.getElementById("video-file");
-var projectTitleInput = document.getElementById("project-title");
-var projectBriefInput = document.getElementById("project-brief");
-var projectImagesInput = document.getElementById("project-images");
-var projectTimelineInput = document.getElementById("project-timeline");
-var projectContentInput = document.getElementById("project-content");
-var projectResultsInput = document.getElementById("project-results");
 var bannerFileInput = document.getElementById("banner-file");
 var uploadBannerButton = document.getElementById("upload-banner");
 var removeBannerButton = document.getElementById("remove-banner");
@@ -27,7 +21,6 @@ var headerArea = document.getElementById("header-area");
 var heroBanner = document.getElementById("hero-banner");
 var footerBanner = document.getElementById("footer-banner");
 var uploadVideoButton = document.getElementById("upload-video");
-var uploadProjectButton = document.getElementById("upload-project");
 var videoGrid = document.querySelector("#videos .grid");
 var imageGrid = document.querySelector("#images .grid");
 
@@ -1558,69 +1551,6 @@ function uploadVideo() {
 }
 
 // === 图文项目上传 ===
-function uploadProject() {
-  if (!projectImagesInput || !projectImagesInput.files.length) {
-    window.alert("请至少选择一张图片。");
-    return;
-  }
-  var title = projectTitleInput.value.trim() || "未命名项目";
-  var brief = projectBriefInput.value.trim();
-  var timeline = projectTimelineInput.value.trim();
-  var content = projectContentInput.value.trim();
-  var results = projectResultsInput.value.trim();
-
-  var files = Array.from(projectImagesInput.files);
-  var projectId = generateWorkId();
-  var images = [];
-  var coverFileData = files[0];
-
-  files.forEach(function (file) {
-    images.push({ url: URL.createObjectURL(file), fileName: file.name });
-  });
-
-  var project = {
-    id: projectId,
-    type: "image-project",
-    title: title,
-    brief: brief,
-    images: images,
-    timeline: timeline,
-    content: content,
-    results: results,
-    coverFileData: coverFileData,
-    createdAt: Date.now()
-  };
-
-  allProjects[projectId] = project;
-  renderProjectCard(project);
-  initSingleCard(imageGrid.querySelector('.project-card[data-project-id="' + projectId + '"]'));
-
-  var dbProject = {
-    id: projectId,
-    type: "image-project",
-    title: title,
-    brief: brief,
-    images: files.map(function (f) { return { fileName: f.name, fileData: f }; }),
-    timeline: timeline,
-    content: content,
-    results: results,
-    coverFileData: coverFileData,
-    createdAt: Date.now()
-  };
-  saveWorkToDB(dbProject).then(function () {
-    window.alert("项目「" + title + "」已保存成功，可以刷新页面了。");
-  }).catch(function () {
-    window.alert("保存失败，请重试。");
-  });
-
-  projectTitleInput.value = "";
-  projectBriefInput.value = "";
-  projectImagesInput.value = "";
-  projectTimelineInput.value = "";
-  projectContentInput.value = "";
-  projectResultsInput.value = "";
-}
-
 function getBaseUrl() {
   if (BASE_SITE_URL) {
     return BASE_SITE_URL.replace(/\/index\.html$|\/$/, "/index.html");
@@ -1638,7 +1568,6 @@ if (removeBannerButton) removeBannerButton.addEventListener("click", removeBanne
 if (uploadFooterBannerBtn) uploadFooterBannerBtn.addEventListener("click", uploadFooterBanner);
 if (removeFooterBannerBtn) removeFooterBannerBtn.addEventListener("click", removeFooterBanner);
 if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
-if (uploadProjectButton) uploadProjectButton.addEventListener("click", uploadProject);
 
 document.addEventListener("focusin", function (e) {
   if (e.target.closest(".card-body") && e.target.isContentEditable) {
