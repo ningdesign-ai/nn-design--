@@ -462,6 +462,82 @@ nav a {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
+/* 图片编辑容器 */
+.detail-image-wrapper {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.detail-image-wrapper img {
+  margin-bottom: 0;
+}
+
+.detail-image-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.detail-image-wrapper:hover .detail-image-actions {
+  opacity: 1;
+}
+
+.detail-image-actions button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.detail-image-actions button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.detail-image-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.detail-image-actions button.img-del {
+  background: rgba(200, 40, 40, 0.7);
+}
+
+.detail-image-actions button.img-del:hover {
+  background: rgba(200, 40, 40, 0.95);
+}
+
+/* 添加图片按钮 */
+.detail-add-image-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  background: none;
+  color: #666;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.detail-add-image-btn:hover {
+  border-color: #111;
+  color: #111;
+}
+
 /* 右：项目信息 */
 .project-detail-info {
   flex: 2;

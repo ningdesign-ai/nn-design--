@@ -96,29 +96,7 @@ function generateWorkId() {
   return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 }
 
-// === 硬编码项目数据（方案 A：提交到仓库） ===
-var hardcodedProjects = {
-  "proj-hardcoded-1": {
-    id: "proj-hardcoded-1",
-    title: "作品集图片",
-    brief: "品牌视觉展示图，简洁构图与明快色彩的组合。",
-    images: [{ url: "作品集图片.png", fileName: "作品集图片.png" }],
-    timeline: "2025年",
-    content: "品牌视觉设计项目，包含主视觉图和辅助图形。",
-    results: "提升了品牌视觉的一致性和辨识度。"
-  },
-  "proj-hardcoded-2": {
-    id: "proj-hardcoded-2",
-    title: "长图内容",
-    brief: "图文内容版式设计，适合社交媒体与展示页呈现。",
-    images: [{ url: "https://via.placeholder.com/640x480?text=图文作品", fileName: "图文作品" }],
-    timeline: "2025年",
-    content: "社交媒体长图内容排版设计。",
-    results: "提高了内容的阅读率和互动率。"
-  }
-};
-
-// 内存缓存：合并硬编码 + IndexedDB
+// 内存缓存：IndexedDB 加载的项目数据
 var allProjects = {};
 
 // === 设备指纹 ===
@@ -240,11 +218,6 @@ function authorizePage() {
 
 // === 从 IndexedDB 渲染已保存的作品 ===
 function renderPersistedWorks() {
-  // 先加载硬编码项目
-  Object.keys(hardcodedProjects).forEach(function (id) {
-    allProjects[id] = hardcodedProjects[id];
-  });
-
   return loadAllWorksFromDB().then(function (works) {
     if (!works.length) return;
     works.sort(function (a, b) { return b.createdAt - a.createdAt; });
@@ -321,47 +294,26 @@ function openProjectDetail(projectId) {
 
   var overlay = document.createElement("div");
   overlay.className = "project-detail-overlay";
+  overlay.setAttribute("data-project-id", projectId);
 
   var panel = document.createElement("div");
   panel.className = "project-detail-panel";
 
-  // 关闭按钮
   var closeBtn = document.createElement("button");
   closeBtn.className = "project-detail-close";
   closeBtn.innerHTML = "&#x2715;";
   closeBtn.addEventListener("click", function (e) {
     e.stopPropagation();
-    closeProjectDetail();
+    closeProjectDetail(projectId);
   });
 
-  // 左侧图片区
   var imagesDiv = document.createElement("div");
   imagesDiv.className = "project-detail-images";
-  (project.images || []).forEach(function (img) {
-    var imgEl = document.createElement("img");
-    imgEl.src = img.url;
-    imgEl.alt = project.title;
-    imagesDiv.appendChild(imgEl);
-  });
+  buildDetailImages(imagesDiv, project, projectId);
 
-  // 右侧信息区
   var infoDiv = document.createElement("div");
   infoDiv.className = "project-detail-info";
-  infoDiv.innerHTML =
-    '<h2>' + (project.title || "") + '</h2>' +
-    '<p class="project-brief">' + (project.brief || "") + '</p>' +
-    '<div class="info-block">' +
-    '<h4>项目时间</h4>' +
-    '<p>' + (project.timeline || "未填写") + '</p>' +
-    '</div>' +
-    '<div class="info-block">' +
-    '<h4>项目内容</h4>' +
-    '<p>' + (project.content || "未填写") + '</p>' +
-    '</div>' +
-    '<div class="info-block">' +
-    '<h4>项目结果</h4>' +
-    '<p>' + (project.results || "未填写") + '</p>' +
-    '</div>';
+  buildDetailInfo(infoDiv, project, projectId);
 
   panel.appendChild(closeBtn);
   panel.appendChild(imagesDiv);
@@ -369,26 +321,220 @@ function openProjectDetail(projectId) {
   overlay.appendChild(panel);
 
   overlay.addEventListener("click", function (e) {
-    if (e.target === overlay) closeProjectDetail();
+    if (e.target === overlay) closeProjectDetail(projectId);
   });
 
   document.body.appendChild(overlay);
   document.body.style.overflow = "hidden";
 }
 
-function closeProjectDetail() {
+function buildDetailImages(container, project, projectId) {
+  container.innerHTML = "";
+  (project.images || []).forEach(function (img, index) {
+    var wrapper = document.createElement("div");
+    wrapper.className = "detail-image-wrapper";
+
+    var imgEl = document.createElement("img");
+    imgEl.src = img.url;
+    imgEl.alt = project.title;
+    wrapper.appendChild(imgEl);
+
+    if (gIsAuthor) {
+      var actions = document.createElement("div");
+      actions.className = "detail-image-actions";
+
+      var upBtn = document.createElement("button");
+      upBtn.innerHTML = "&#8593;";
+      upBtn.title = "上移";
+      upBtn.disabled = index === 0;
+      upBtn.addEventListener("click", function () {
+        reorderProjectImage(projectId, index, index - 1, container);
+      });
+
+      var downBtn = document.createElement("button");
+      downBtn.innerHTML = "&#8595;";
+      downBtn.title = "下移";
+      downBtn.disabled = index === (project.images || []).length - 1;
+      downBtn.addEventListener("click", function () {
+        reorderProjectImage(projectId, index, index + 1, container);
+      });
+
+      var delBtn = document.createElement("button");
+      delBtn.innerHTML = "&#x2715;";
+      delBtn.className = "img-del";
+      delBtn.title = "删除图片";
+      delBtn.addEventListener("click", function () {
+        deleteProjectImage(projectId, index, container);
+      });
+
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
+      actions.appendChild(delBtn);
+      wrapper.appendChild(actions);
+    }
+
+    container.appendChild(wrapper);
+  });
+
+  if (gIsAuthor) {
+    var addBtn = document.createElement("button");
+    addBtn.className = "detail-add-image-btn";
+    addBtn.textContent = "+ 添加图片";
+    addBtn.addEventListener("click", function () {
+      addProjectImages(projectId, container);
+    });
+    container.appendChild(addBtn);
+  }
+}
+
+function reorderProjectImage(projectId, fromIndex, toIndex, container) {
+  var project = allProjects[projectId];
+  if (!project) return;
+  var images = project.images;
+  var tmp = images[fromIndex];
+  images[fromIndex] = images[toIndex];
+  images[toIndex] = tmp;
+  buildDetailImages(container, project, projectId);
+  persistProjectToDB(projectId);
+}
+
+function deleteProjectImage(projectId, index, container) {
+  var project = allProjects[projectId];
+  if (!project || project.images.length <= 1) {
+    window.alert("项目至少保留一张图片。");
+    return;
+  }
+  project.images.splice(index, 1);
+  buildDetailImages(container, project, projectId);
+  persistProjectToDB(projectId);
+  refreshProjectCard(projectId);
+}
+
+function addProjectImages(projectId, container) {
+  var project = allProjects[projectId];
+  if (!project) return;
+  var input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.multiple = true;
+  input.addEventListener("change", function () {
+    if (!input.files || !input.files.length) return;
+    Array.from(input.files).forEach(function (file) {
+      project.images.push({ url: URL.createObjectURL(file), fileName: file.name, fileData: file });
+    });
+    buildDetailImages(container, project, projectId);
+    persistProjectToDB(projectId);
+  });
+  input.click();
+}
+
+function buildDetailInfo(container, project, projectId) {
+  container.innerHTML = "";
+
+  var titleEl = document.createElement("h2");
+  titleEl.textContent = project.title || "";
+  if (gIsAuthor) titleEl.contentEditable = "true";
+
+  var briefEl = document.createElement("p");
+  briefEl.className = "project-brief";
+  briefEl.textContent = project.brief || "";
+  if (gIsAuthor) briefEl.contentEditable = "true";
+
+  function makeInfoBlock(label, value) {
+    var block = document.createElement("div");
+    block.className = "info-block";
+    var h4 = document.createElement("h4");
+    h4.textContent = label;
+    var p = document.createElement("p");
+    p.textContent = value || "未填写";
+    if (gIsAuthor) p.contentEditable = "true";
+    block.appendChild(h4);
+    block.appendChild(p);
+    return block;
+  }
+
+  container.appendChild(titleEl);
+  container.appendChild(briefEl);
+  container.appendChild(makeInfoBlock("项目时间", project.timeline));
+  container.appendChild(makeInfoBlock("项目内容", project.content));
+  container.appendChild(makeInfoBlock("项目结果", project.results));
+
+  if (gIsAuthor) {
+    container.querySelectorAll('[contenteditable="true"]').forEach(function (el) {
+      el.addEventListener("blur", function () {
+        saveDetailEdits(container, projectId);
+      });
+    });
+  }
+}
+
+function saveDetailEdits(container, projectId) {
+  var project = allProjects[projectId];
+  if (!project) return;
+  var titleEl = container.querySelector("h2");
+  var briefEl = container.querySelector(".project-brief");
+  var infoPs = container.querySelectorAll(".info-block p");
+  if (titleEl) project.title = titleEl.textContent;
+  if (briefEl) project.brief = briefEl.textContent;
+  if (infoPs.length >= 3) {
+    project.timeline = infoPs[0].textContent;
+    project.content = infoPs[1].textContent;
+    project.results = infoPs[2].textContent;
+  }
+  persistProjectToDB(projectId);
+  refreshProjectCard(projectId);
+}
+
+function persistProjectToDB(projectId) {
+  var project = allProjects[projectId];
+  if (!project) return;
+  updateWorkInDB(projectId, {
+    title: project.title,
+    brief: project.brief,
+    timeline: project.timeline,
+    content: project.content,
+    results: project.results,
+    images: (project.images || []).map(function (img) {
+      return { fileName: img.fileName, fileData: img.fileData || null };
+    }),
+    coverFileData: project.images && project.images.length ? project.images[0].fileData : null
+  }).catch(function () {});
+}
+
+function refreshProjectCard(projectId) {
+  var card = document.querySelector('.project-card[data-project-id="' + projectId + '"]');
+  if (!card) return;
+  var project = allProjects[projectId];
+  if (!project) return;
+  var coverUrl = project.images && project.images.length ? project.images[0].url : "";
+  if (coverUrl) {
+    var img = card.querySelector(".card-media img");
+    if (img) img.src = coverUrl;
+  }
+  var h3 = card.querySelector(".card-body h3");
+  if (h3) h3.textContent = project.title || "";
+  var p = card.querySelector(".card-body p");
+  if (p) p.textContent = project.brief || "";
+}
+
+function closeProjectDetail(projectId) {
   var overlay = document.querySelector(".project-detail-overlay");
-  if (overlay) overlay.remove();
+  if (!overlay) return;
+  var pid = projectId || overlay.getAttribute("data-project-id");
+  if (pid) {
+    var infoDiv = overlay.querySelector(".project-detail-info");
+    if (infoDiv) saveDetailEdits(infoDiv, pid);
+  }
+  overlay.remove();
   document.body.style.overflow = "";
 }
 
 function getProjectData(projectId) {
   if (allProjects[projectId]) return Promise.resolve(allProjects[projectId]);
-  // 兜底：从 IndexedDB 加载
   return openDB().then(function (db) {
     var tx = db.transaction(STORE_NAME, "readonly");
     var req = tx.objectStore(STORE_NAME).get(projectId);
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
       req.onsuccess = function () {
         var data = req.result;
         if (data) allProjects[projectId] = data;
@@ -565,6 +711,13 @@ function setCardEditable(card, enabled) {
 }
 
 function editWork(card) {
+  var projectId = card.getAttribute("data-project-id");
+  if (projectId) {
+    getProjectData(projectId).then(function (data) {
+      if (data) openProjectDetail(projectId);
+    });
+    return;
+  }
   var title = card.querySelector(".card-body h3");
   if (title) {
     title.classList.add("editing");
