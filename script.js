@@ -106,11 +106,11 @@ function generateWorkId() {
 
 // === Banner 背景 ===
 function applyBannerToBody(url, pos, zoom) {
-  if (!bodyElement) return;
-  bodyElement.style.backgroundImage = url ? "url(" + url + ")" : "";
-  bodyElement.style.backgroundPosition = "50% " + (pos || 50) + "%";
-  bodyElement.style.backgroundSize = (zoom && zoom > 1) ? (zoom * 100) + "%" : (url ? "cover" : "");
-  bodyElement.style.backgroundRepeat = "no-repeat";
+  if (!siteContent) return;
+  siteContent.style.backgroundImage = url ? "url(" + url + ")" : "";
+  siteContent.style.backgroundPosition = "50% " + (pos || 50) + "%";
+  siteContent.style.backgroundSize = (zoom && zoom > 1) ? (zoom * 100) + "%" : (url ? "cover" : "");
+  siteContent.style.backgroundRepeat = "no-repeat";
 }
 
 function loadBannerFromDB() {
