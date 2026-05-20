@@ -93,6 +93,14 @@ nav a {
   width: 100%;
   aspect-ratio: 3 / 1;
   min-height: 250px;
+  background-image: url("底.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+#header-area {
+  background-image: url("顶.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

@@ -118,6 +118,7 @@ function loadBannerFromDB() {
           var url = URL.createObjectURL(data.fileData);
           applyBannerToBody(url, data.bannerPosition, data.bannerZoom);
         }
+        // 无自定义 banner 时保留 CSS 默认背景
         resolve();
       };
       req.onerror = function () { resolve(); };
@@ -127,7 +128,11 @@ function loadBannerFromDB() {
 
 function removeBanner() {
   deleteWorkFromDB("site-banner").then(function () {
-    applyBannerToBody("", 50, null);
+    if (headerArea) {
+      headerArea.style.backgroundImage = "";
+      headerArea.style.backgroundPosition = "";
+      headerArea.style.backgroundSize = "";
+    }
   }).catch(function () {});
 }
 
@@ -294,6 +299,7 @@ function loadFooterBannerFromDB() {
             }
           }
         }
+        // 无自定义 banner 时保留 CSS 默认背景
         resolve();
       };
       req.onerror = function () { resolve(); };
