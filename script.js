@@ -249,12 +249,13 @@ function renderProjectCard(project) {
   }
   if (!coverUrl) return;
   var coverPos = project.coverPosition != null ? project.coverPosition : 50;
+  var coverZoom = project.coverZoom != null ? project.coverZoom : 1;
   var card = document.createElement("article");
   card.className = "card project-card";
   card.setAttribute("data-project-id", project.id);
   card.innerHTML =
     '<div class="card-media">' +
-    '<img src="' + coverUrl + '" alt="' + (project.title || "") + '" style="object-position: 50% ' + coverPos + '%;" />' +
+    '<img src="' + coverUrl + '" alt="' + (project.title || "") + '" style="object-position: 50% ' + coverPos + '%; transform: scale(' + coverZoom + '); transform-origin: 50% 50%;" />' +
     '</div>' +
     '<div class="card-body">' +
     '<h3>' + (project.title || "") + '</h3>' +
@@ -498,7 +499,9 @@ function persistProjectToDB(projectId) {
     images: (project.images || []).map(function (img) {
       return { fileName: img.fileName, fileData: img.fileData || null };
     }),
-    coverFileData: project.images && project.images.length ? project.images[0].fileData : null
+    coverFileData: project.images && project.images.length ? project.images[0].fileData : null,
+    coverPosition: project.coverPosition,
+    coverZoom: project.coverZoom
   }).catch(function () {});
 }
 
@@ -512,7 +515,11 @@ function refreshProjectCard(projectId) {
     var img = card.querySelector(".card-media img");
     if (img) {
       img.src = coverUrl;
-      img.style.objectPosition = "50% " + (project.coverPosition != null ? project.coverPosition : 50) + "%";
+      var pos = project.coverPosition != null ? project.coverPosition : 50;
+      var zoom = project.coverZoom != null ? project.coverZoom : 1;
+      img.style.objectPosition = "50% " + pos + "%";
+      img.style.transform = "scale(" + zoom + ")";
+      img.style.transformOrigin = "50% 50%";
     }
   }
   var h3 = card.querySelector(".card-body h3");
@@ -621,15 +628,22 @@ function closeLightbox() {
 }
 
 // === 封面裁切 ===
-function openCoverCrop(card) {
+function openCoverCrop(card, newCoverUrl) {
   var projectId = card.getAttribute("data-project-id");
   var project = allProjects[projectId];
   if (!project) return;
 
-  var coverUrl = project.coverUrl || (project.images && project.images.length ? project.images[0].url : null);
+  var coverUrl = newCoverUrl || project.coverUrl || (project.images && project.images.length ? project.images[0].url : null);
   if (!coverUrl) return;
 
   var currentPos = project.coverPosition != null ? project.coverPosition : 50;
+  var currentZoom = project.coverZoom != null ? project.coverZoom : 1;
+
+  function applyPreview(img, pos, zoom) {
+    img.style.objectPosition = "50% " + pos + "%";
+    img.style.transform = "scale(" + zoom + ")";
+    img.style.transformOrigin = "50% 50%";
+  }
 
   var overlay = document.createElement("div");
   overlay.className = "crop-overlay";
@@ -637,38 +651,69 @@ function openCoverCrop(card) {
   var dialog = document.createElement("div");
   dialog.className = "crop-dialog";
 
-  dialog.innerHTML =
-    '<h3>调整封面裁切</h3>' +
-    '<p class="crop-hint">拖动滑块调整图片可见区域</p>';
+  var title = document.createElement("h3");
+  title.textContent = "调整封面裁切";
+  var hint = document.createElement("p");
+  hint.className = "crop-hint";
+  hint.textContent = "拖动滑块调整可见区域和缩放比例";
 
   // 16:9 预览框
   var previewBox = document.createElement("div");
   previewBox.className = "crop-preview";
   var previewImg = document.createElement("img");
   previewImg.src = coverUrl;
-  previewImg.style.objectPosition = "50% " + currentPos + "%";
+  applyPreview(previewImg, currentPos, currentZoom);
   previewBox.appendChild(previewImg);
 
-  // 滑块
-  var sliderRow = document.createElement("div");
-  sliderRow.className = "crop-slider-row";
-  var slider = document.createElement("input");
-  slider.type = "range";
-  slider.min = 0;
-  slider.max = 100;
-  slider.value = currentPos;
-  slider.className = "crop-slider";
-
+  // 位置滑块
+  var posRow = document.createElement("div");
+  posRow.className = "crop-slider-row";
   var posLabel = document.createElement("span");
-  posLabel.className = "crop-pos-label";
-  posLabel.textContent = currentPos + "%";
-  sliderRow.appendChild(slider);
-  sliderRow.appendChild(posLabel);
+  posLabel.className = "crop-slider-label";
+  posLabel.textContent = "位置";
+  var posSlider = document.createElement("input");
+  posSlider.type = "range";
+  posSlider.min = 0;
+  posSlider.max = 100;
+  posSlider.value = currentPos;
+  posSlider.className = "crop-slider";
+  var posVal = document.createElement("span");
+  posVal.className = "crop-pos-label";
+  posVal.textContent = currentPos + "%";
+  posRow.appendChild(posLabel);
+  posRow.appendChild(posSlider);
+  posRow.appendChild(posVal);
 
-  slider.addEventListener("input", function () {
-    var val = parseInt(slider.value, 10);
-    previewImg.style.objectPosition = "50% " + val + "%";
-    posLabel.textContent = val + "%";
+  posSlider.addEventListener("input", function () {
+    var val = parseInt(posSlider.value, 10);
+    applyPreview(previewImg, val, parseFloat(zoomSlider.value));
+    posVal.textContent = val + "%";
+  });
+
+  // 缩放滑块
+  var zoomRow = document.createElement("div");
+  zoomRow.className = "crop-slider-row";
+  var zoomLabel = document.createElement("span");
+  zoomLabel.className = "crop-slider-label";
+  zoomLabel.textContent = "缩放";
+  var zoomSlider = document.createElement("input");
+  zoomSlider.type = "range";
+  zoomSlider.min = 1;
+  zoomSlider.max = 3;
+  zoomSlider.step = 0.05;
+  zoomSlider.value = currentZoom;
+  zoomSlider.className = "crop-slider";
+  var zoomVal = document.createElement("span");
+  zoomVal.className = "crop-pos-label";
+  zoomVal.textContent = currentZoom + "x";
+  zoomRow.appendChild(zoomLabel);
+  zoomRow.appendChild(zoomSlider);
+  zoomRow.appendChild(zoomVal);
+
+  zoomSlider.addEventListener("input", function () {
+    var val = parseFloat(zoomSlider.value);
+    applyPreview(previewImg, parseInt(posSlider.value, 10), val);
+    zoomVal.textContent = val.toFixed(2) + "x";
   });
 
   // 按钮
@@ -685,21 +730,24 @@ function openCoverCrop(card) {
   okBtn.textContent = "确定";
   okBtn.className = "crop-ok-btn";
   okBtn.addEventListener("click", function () {
-    var val = parseInt(slider.value, 10);
-    project.coverPosition = val;
+    var pos = parseInt(posSlider.value, 10);
+    var zoom = parseFloat(zoomSlider.value);
+    project.coverPosition = pos;
+    project.coverZoom = zoom;
     allProjects[projectId] = project;
     persistProjectToDB(projectId);
-    // 更新卡片上的 object-position
-    var cardImg = card.querySelector(".card-media > img");
-    if (cardImg) cardImg.style.objectPosition = "50% " + val + "%";
+    applyCardCover(card, pos, zoom);
     overlay.remove();
   });
 
   btnRow.appendChild(cancelBtn);
   btnRow.appendChild(okBtn);
 
+  dialog.appendChild(title);
+  dialog.appendChild(hint);
   dialog.appendChild(previewBox);
-  dialog.appendChild(sliderRow);
+  dialog.appendChild(posRow);
+  dialog.appendChild(zoomRow);
   dialog.appendChild(btnRow);
   overlay.appendChild(dialog);
 
@@ -708,6 +756,14 @@ function openCoverCrop(card) {
   });
 
   document.body.appendChild(overlay);
+}
+
+function applyCardCover(card, pos, zoom) {
+  var img = card.querySelector(".card-media > img");
+  if (!img) return;
+  img.style.objectPosition = "50% " + pos + "%";
+  img.style.transform = "scale(" + zoom + ")";
+  img.style.transformOrigin = "50% 50%";
 }
 
 // === 设置菜单 ===
@@ -871,8 +927,12 @@ function changeCover(card) {
     var projectId = card.getAttribute("data-project-id");
     if (projectId && allProjects[projectId]) {
       allProjects[projectId].coverFileData = file;
-      allProjects[projectId].images[0] = { url: url, fileName: file.name };
+      allProjects[projectId].images[0] = { url: url, fileName: file.name, fileData: file };
+      allProjects[projectId].coverUrl = url;
       updateWorkInDB(projectId, { coverFileData: file }).catch(function () {});
+      // 弹出裁切对话框
+      openCoverCrop(card, url);
+      return;
     }
 
     bindCardClick(card);
