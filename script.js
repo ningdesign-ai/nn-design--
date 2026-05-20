@@ -11,11 +11,14 @@ var authorBadge = document.getElementById("author-badge");
 var deauthButton = document.getElementById("deauthorize-device");
 
 var videoFileInput = document.getElementById("video-file");
-var imageFileInput = document.getElementById("image-file");
-var imageTitleInput = document.getElementById("image-title");
-var imageDescriptionInput = document.getElementById("image-description");
+var projectTitleInput = document.getElementById("project-title");
+var projectBriefInput = document.getElementById("project-brief");
+var projectImagesInput = document.getElementById("project-images");
+var projectTimelineInput = document.getElementById("project-timeline");
+var projectContentInput = document.getElementById("project-content");
+var projectResultsInput = document.getElementById("project-results");
 var uploadVideoButton = document.getElementById("upload-video");
-var uploadImageButton = document.getElementById("upload-image");
+var uploadProjectButton = document.getElementById("upload-project");
 var videoGrid = document.querySelector("#videos .grid");
 var imageGrid = document.querySelector("#images .grid");
 
@@ -92,6 +95,31 @@ function updateWorkInDB(id, updates) {
 function generateWorkId() {
   return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 }
+
+// === 硬编码项目数据（方案 A：提交到仓库） ===
+var hardcodedProjects = {
+  "proj-hardcoded-1": {
+    id: "proj-hardcoded-1",
+    title: "作品集图片",
+    brief: "品牌视觉展示图，简洁构图与明快色彩的组合。",
+    images: [{ url: "作品集图片.png", fileName: "作品集图片.png" }],
+    timeline: "2025年",
+    content: "品牌视觉设计项目，包含主视觉图和辅助图形。",
+    results: "提升了品牌视觉的一致性和辨识度。"
+  },
+  "proj-hardcoded-2": {
+    id: "proj-hardcoded-2",
+    title: "长图内容",
+    brief: "图文内容版式设计，适合社交媒体与展示页呈现。",
+    images: [{ url: "https://via.placeholder.com/640x480?text=图文作品", fileName: "图文作品" }],
+    timeline: "2025年",
+    content: "社交媒体长图内容排版设计。",
+    results: "提高了内容的阅读率和互动率。"
+  }
+};
+
+// 内存缓存：合并硬编码 + IndexedDB
+var allProjects = {};
 
 // === 设备指纹 ===
 function generateDeviceFingerprint() {
@@ -212,13 +240,53 @@ function authorizePage() {
 
 // === 从 IndexedDB 渲染已保存的作品 ===
 function renderPersistedWorks() {
+  // 先加载硬编码项目
+  Object.keys(hardcodedProjects).forEach(function (id) {
+    allProjects[id] = hardcodedProjects[id];
+  });
+
   return loadAllWorksFromDB().then(function (works) {
     if (!works.length) return;
     works.sort(function (a, b) { return b.createdAt - a.createdAt; });
     works.forEach(function (work) {
-      renderWorkCard(work);
+      if (work.type === "image-project") {
+        // 将 IndexedDB 中的 Blob 转为 blob URL
+        work.images = (work.images || []).map(function (img) {
+          return {
+            url: img.fileData ? URL.createObjectURL(img.fileData) : img.url,
+            fileName: img.fileName
+          };
+        });
+        if (work.coverFileData) {
+          work.coverUrl = URL.createObjectURL(work.coverFileData);
+        }
+        allProjects[work.id] = work;
+        renderProjectCard(work);
+      } else {
+        renderWorkCard(work);
+      }
     });
   });
+}
+
+function renderProjectCard(project) {
+  var coverUrl = project.coverUrl;
+  if (!coverUrl && project.images && project.images.length) {
+    coverUrl = project.images[0].url;
+  }
+  if (!coverUrl) return;
+  var card = document.createElement("article");
+  card.className = "card project-card";
+  card.setAttribute("data-project-id", project.id);
+  card.innerHTML =
+    '<div class="card-media">' +
+    '<img src="' + coverUrl + '" alt="' + (project.title || "") + '" />' +
+    '</div>' +
+    '<div class="card-body">' +
+    '<h3>' + (project.title || "") + '</h3>' +
+    '<p>' + (project.brief || "") + '</p>' +
+    '</div>';
+  if (imageGrid) imageGrid.appendChild(card);
 }
 
 function renderWorkCard(work) {
@@ -244,6 +312,91 @@ function renderWorkCard(work) {
   } else if (work.type === "image" && imageGrid) {
     imageGrid.appendChild(card);
   }
+}
+
+// === 项目详情面板 ===
+function openProjectDetail(projectId) {
+  var project = allProjects[projectId];
+  if (!project) return;
+
+  var overlay = document.createElement("div");
+  overlay.className = "project-detail-overlay";
+
+  var panel = document.createElement("div");
+  panel.className = "project-detail-panel";
+
+  // 关闭按钮
+  var closeBtn = document.createElement("button");
+  closeBtn.className = "project-detail-close";
+  closeBtn.innerHTML = "&#x2715;";
+  closeBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    closeProjectDetail();
+  });
+
+  // 左侧图片区
+  var imagesDiv = document.createElement("div");
+  imagesDiv.className = "project-detail-images";
+  (project.images || []).forEach(function (img) {
+    var imgEl = document.createElement("img");
+    imgEl.src = img.url;
+    imgEl.alt = project.title;
+    imagesDiv.appendChild(imgEl);
+  });
+
+  // 右侧信息区
+  var infoDiv = document.createElement("div");
+  infoDiv.className = "project-detail-info";
+  infoDiv.innerHTML =
+    '<h2>' + (project.title || "") + '</h2>' +
+    '<p class="project-brief">' + (project.brief || "") + '</p>' +
+    '<div class="info-block">' +
+    '<h4>项目时间</h4>' +
+    '<p>' + (project.timeline || "未填写") + '</p>' +
+    '</div>' +
+    '<div class="info-block">' +
+    '<h4>项目内容</h4>' +
+    '<p>' + (project.content || "未填写") + '</p>' +
+    '</div>' +
+    '<div class="info-block">' +
+    '<h4>项目结果</h4>' +
+    '<p>' + (project.results || "未填写") + '</p>' +
+    '</div>';
+
+  panel.appendChild(closeBtn);
+  panel.appendChild(imagesDiv);
+  panel.appendChild(infoDiv);
+  overlay.appendChild(panel);
+
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeProjectDetail();
+  });
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = "hidden";
+}
+
+function closeProjectDetail() {
+  var overlay = document.querySelector(".project-detail-overlay");
+  if (overlay) overlay.remove();
+  document.body.style.overflow = "";
+}
+
+function getProjectData(projectId) {
+  if (allProjects[projectId]) return Promise.resolve(allProjects[projectId]);
+  // 兜底：从 IndexedDB 加载
+  return openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readonly");
+    var req = tx.objectStore(STORE_NAME).get(projectId);
+    return new Promise(function (resolve, reject) {
+      req.onsuccess = function () {
+        var data = req.result;
+        if (data) allProjects[projectId] = data;
+        resolve(data || null);
+      };
+      req.onerror = function () { resolve(null); };
+    });
+  });
 }
 
 // === 灯箱 ===
@@ -392,10 +545,14 @@ function refreshCardSettings() {
 // === 删除作品 ===
 function deleteWork(card) {
   if (!confirm("确定要删除这个作品吗？此操作不可撤销。")) return;
-  var workId = card.getAttribute("data-work-id");
+  var workId = card.getAttribute("data-work-id") || card.getAttribute("data-project-id");
+  var projectId = card.getAttribute("data-project-id");
   card.remove();
   if (workId) {
     deleteWorkFromDB(workId).catch(function () {});
+  }
+  if (projectId) {
+    delete allProjects[projectId];
   }
 }
 
@@ -451,8 +608,14 @@ function changeCover(card) {
     if (workId) {
       updateWorkInDB(workId, { fileData: file, fileName: file.name }).catch(function () {});
     }
+    var projectId = card.getAttribute("data-project-id");
+    if (projectId && allProjects[projectId]) {
+      allProjects[projectId].coverFileData = file;
+      allProjects[projectId].images[0] = { url: url, fileName: file.name };
+      updateWorkInDB(projectId, { coverFileData: file }).catch(function () {});
+    }
 
-    bindCardLightbox(card);
+    bindCardClick(card);
   });
 
   input.click();
@@ -460,18 +623,32 @@ function changeCover(card) {
 
 // === 编辑内容持久化 ===
 function persistCardEdit(card) {
-  var workId = card.getAttribute("data-work-id");
-  if (!workId) return;
   var title = card.querySelector(".card-body h3");
   var desc = card.querySelector(".card-body p");
-  updateWorkInDB(workId, {
-    title: title ? title.textContent : "",
-    description: desc ? desc.textContent : ""
-  }).catch(function () {});
+  var titleText = title ? title.textContent : "";
+  var descText = desc ? desc.textContent : "";
+
+  var workId = card.getAttribute("data-work-id");
+  if (workId) {
+    updateWorkInDB(workId, {
+      title: titleText,
+      description: descText
+    }).catch(function () {});
+  }
+
+  var projectId = card.getAttribute("data-project-id");
+  if (projectId && allProjects[projectId]) {
+    allProjects[projectId].title = titleText;
+    allProjects[projectId].brief = descText;
+    updateWorkInDB(projectId, {
+      title: titleText,
+      brief: descText
+    }).catch(function () {});
+  }
 }
 
-// === 灯箱绑定 ===
-function bindCardLightbox(card) {
+// === 卡片点击绑定 ===
+function bindCardClick(card) {
   var cardMedia = card.querySelector(".card-media");
   if (!cardMedia) return;
 
@@ -480,12 +657,21 @@ function bindCardLightbox(card) {
 
   createSettingsMenu(card);
 
+  var isProject = card.classList.contains("project-card");
+  var projectId = card.getAttribute("data-project-id");
+
   newMedia.addEventListener("click", function (e) {
     if (e.target.closest(".card-settings") || e.target.closest(".settings-menu")) {
       return;
     }
-    var media = newMedia.querySelector("video") || newMedia.querySelector("img");
-    if (media) openLightbox(media);
+    if (isProject && projectId) {
+      getProjectData(projectId).then(function (data) {
+        if (data) openProjectDetail(projectId);
+      });
+    } else {
+      var media = newMedia.querySelector("video") || newMedia.querySelector("img");
+      if (media) openLightbox(media);
+    }
   });
 }
 
@@ -496,7 +682,7 @@ function initAllCards() {
     ensureCardMedia(card);
     createSettingsMenu(card);
     setCardEditable(card, gIsAuthor);
-    bindCardLightbox(card);
+    bindCardClick(card);
   });
 }
 
@@ -544,38 +730,10 @@ function addVideoWork(file) {
   }).catch(function () {});
 }
 
-function addImageWork(file, title, description) {
-  if (!imageGrid) return;
-  var workId = generateWorkId();
-  var url = URL.createObjectURL(file);
-  var mediaHTML = '<img src="' + url + '" alt="' + (title || file.name) + '" />';
-  var card = document.createElement("article");
-  card.className = "card";
-  card.setAttribute("data-work-id", workId);
-  card.innerHTML =
-    '<div class="card-media">' + mediaHTML + '</div>' +
-    '<div class="card-body">' +
-    '<h3>' + (title || file.name) + '</h3>' +
-    '<p>' + (description || "已上传的图文作品。") + '</p>' +
-    '</div>';
-  imageGrid.prepend(card);
-  initSingleCard(card);
-
-  saveWorkToDB({
-    id: workId,
-    type: "image",
-    fileName: file.name,
-    fileData: file,
-    title: title || file.name,
-    description: description || "已上传的图文作品。",
-    createdAt: Date.now()
-  }).catch(function () {});
-}
-
 function initSingleCard(card) {
   createSettingsMenu(card);
   setCardEditable(card, gIsAuthor);
-  bindCardLightbox(card);
+  bindCardClick(card);
 }
 
 function uploadVideo() {
@@ -587,15 +745,64 @@ function uploadVideo() {
   videoFileInput.value = "";
 }
 
-function uploadImage() {
-  if (!imageFileInput || !imageFileInput.files.length) {
-    window.alert("请选择一张图片后再上传。");
+// === 图文项目上传 ===
+function uploadProject() {
+  if (!projectImagesInput || !projectImagesInput.files.length) {
+    window.alert("请至少选择一张图片。");
     return;
   }
-  addImageWork(imageFileInput.files[0], imageTitleInput.value.trim(), imageDescriptionInput.value.trim());
-  imageFileInput.value = "";
-  imageTitleInput.value = "";
-  imageDescriptionInput.value = "";
+  var title = projectTitleInput.value.trim() || "未命名项目";
+  var brief = projectBriefInput.value.trim();
+  var timeline = projectTimelineInput.value.trim();
+  var content = projectContentInput.value.trim();
+  var results = projectResultsInput.value.trim();
+
+  var files = Array.from(projectImagesInput.files);
+  var projectId = generateWorkId();
+  var images = [];
+  var coverFileData = files[0];
+
+  files.forEach(function (file) {
+    images.push({ url: URL.createObjectURL(file), fileName: file.name });
+  });
+
+  var project = {
+    id: projectId,
+    type: "image-project",
+    title: title,
+    brief: brief,
+    images: images,
+    timeline: timeline,
+    content: content,
+    results: results,
+    coverFileData: coverFileData,
+    createdAt: Date.now()
+  };
+
+  allProjects[projectId] = project;
+  renderProjectCard(project);
+  initSingleCard(imageGrid.querySelector('.project-card[data-project-id="' + projectId + '"]'));
+
+  var dbProject = {
+    id: projectId,
+    type: "image-project",
+    title: title,
+    brief: brief,
+    images: files.map(function (f) { return { fileName: f.name, fileData: f }; }),
+    timeline: timeline,
+    content: content,
+    results: results,
+    coverFileData: coverFileData,
+    createdAt: Date.now()
+  };
+  saveWorkToDB(dbProject).catch(function () {});
+
+  projectTitleInput.value = "";
+  projectBriefInput.value = "";
+  projectImagesInput.value = "";
+  projectTimelineInput.value = "";
+  projectContentInput.value = "";
+  projectResultsInput.value = "";
 }
 
 function getBaseUrl() {
@@ -611,7 +818,7 @@ function getBaseUrl() {
 // === 事件绑定 ===
 if (deauthButton) deauthButton.addEventListener("click", deauthorizeDevice);
 if (uploadVideoButton) uploadVideoButton.addEventListener("click", uploadVideo);
-if (uploadImageButton) uploadImageButton.addEventListener("click", uploadImage);
+if (uploadProjectButton) uploadProjectButton.addEventListener("click", uploadProject);
 
 document.addEventListener("focusin", function (e) {
   if (e.target.closest(".card-body") && e.target.isContentEditable) {
@@ -629,7 +836,10 @@ document.addEventListener("focusout", function (e) {
 });
 
 document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") closeLightbox();
+  if (e.key === "Escape") {
+    closeLightbox();
+    closeProjectDetail();
+  }
 });
 
 window.addEventListener("load", authorizePage);
