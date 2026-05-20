@@ -345,6 +345,68 @@ function uploadFooterBanner() {
   footerBannerFileInput.value = "";
 }
 
+// === 硬编码项目数据 ===
+var hardcodedProjects = {
+  "proj-1": { id: "proj-1", title: "出海短剧信息流:app宣传页", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "出海短剧信息流:app宣传页/23.png", fileName: "23.png" },
+    { url: "出海短剧信息流:app宣传页/24.png", fileName: "24.png" },
+    { url: "出海短剧信息流:app宣传页/25.png", fileName: "25.png" },
+    { url: "出海短剧信息流:app宣传页/26.png", fileName: "26.png" },
+    { url: "出海短剧信息流:app宣传页/27.png", fileName: "27.png" }
+  ]},
+  "proj-2": { id: "proj-2", title: "员工周年物料", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "员工周年物料/8.png", fileName: "8.png" },
+    { url: "员工周年物料/9.png", fileName: "9.png" },
+    { url: "员工周年物料/10.png", fileName: "10.png" },
+    { url: "员工周年物料/11.png", fileName: "11.png" },
+    { url: "员工周年物料/12.png", fileName: "12.png" }
+  ]},
+  "proj-3": { id: "proj-3", title: "插画作品", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "插画作品/30.png", fileName: "30.png" },
+    { url: "插画作品/31.png", fileName: "31.png" },
+    { url: "插画作品/58.png", fileName: "58.png" },
+    { url: "插画作品/67.png", fileName: "67.png" },
+    { url: "插画作品/69.png", fileName: "69.png" },
+    { url: "插画作品/70.png", fileName: "70.png" },
+    { url: "插画作品/71.png", fileName: "71.png" }
+  ]},
+  "proj-4": { id: "proj-4", title: "摄影海报", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "摄影海报/68.png", fileName: "68.png" }
+  ]},
+  "proj-5": { id: "proj-5", title: "电商视觉", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "电商视觉/48.png", fileName: "48.png" },
+    { url: "电商视觉/60.png", fileName: "60.png" },
+    { url: "电商视觉/63.png", fileName: "63.png" },
+    { url: "电商视觉/64.png", fileName: "64.png" }
+  ]},
+  "proj-6": { id: "proj-6", title: "科技风宣传视觉", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "科技风宣传视觉/15.png", fileName: "15.png" },
+    { url: "科技风宣传视觉/16.png", fileName: "16.png" },
+    { url: "科技风宣传视觉/17.png", fileName: "17.png" },
+    { url: "科技风宣传视觉/18.png", fileName: "18.png" },
+    { url: "科技风宣传视觉/19.png", fileName: "19.png" },
+    { url: "科技风宣传视觉/20.png", fileName: "20.png" },
+    { url: "科技风宣传视觉/21.png", fileName: "21.png" },
+    { url: "科技风宣传视觉/22.png", fileName: "22.png" }
+  ]},
+  "proj-7": { id: "proj-7", title: "虎头帽插画", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "虎头帽插画/28.png", fileName: "28.png" },
+    { url: "虎头帽插画/29.png", fileName: "29.png" }
+  ]},
+  "proj-8": { id: "proj-8", title: "风吹半夏活动页", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "风吹半夏活动页/14.png", fileName: "14.png" },
+    { url: "风吹半夏活动页/风吹半夏.png", fileName: "风吹半夏.png" }
+  ]},
+  "proj-9": { id: "proj-9", title: "龙年台历", brief: "", timeline: "", content: "", results: "", images: [
+    { url: "龙年台历/1.png", fileName: "1.png" },
+    { url: "龙年台历/3.png", fileName: "3.png" },
+    { url: "龙年台历/4.png", fileName: "4.png" },
+    { url: "龙年台历/5.png", fileName: "5.png" },
+    { url: "龙年台历/6.png", fileName: "6.png" },
+    { url: "龙年台历/7.png", fileName: "7.png" }
+  ]}
+};
+
 // 内存缓存：IndexedDB 加载的项目数据
 var allProjects = {};
 
@@ -471,6 +533,12 @@ function authorizePage() {
 
 // === 从 IndexedDB 渲染已保存的作品 ===
 function renderPersistedWorks() {
+  // 先渲染硬编码项目
+  Object.keys(hardcodedProjects).forEach(function (id) {
+    allProjects[id] = hardcodedProjects[id];
+    renderProjectCard(hardcodedProjects[id]);
+  });
+
   return loadAllWorksFromDB().then(function (works) {
     if (!works.length) return;
     works.sort(function (a, b) { return b.createdAt - a.createdAt; });
