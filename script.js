@@ -1303,7 +1303,11 @@ function addVideoWork(file) {
     title: file.name,
     description: "已上传的视频作品。",
     createdAt: Date.now()
-  }).catch(function () {});
+  }).then(function () {
+    window.alert("视频「" + file.name + "」已保存成功。");
+  }).catch(function () {
+    window.alert("保存失败，请重试。");
+  });
 }
 
 function initSingleCard(card) {
@@ -1371,7 +1375,11 @@ function uploadProject() {
     coverFileData: coverFileData,
     createdAt: Date.now()
   };
-  saveWorkToDB(dbProject).catch(function () {});
+  saveWorkToDB(dbProject).then(function () {
+    window.alert("项目「" + title + "」已保存成功，可以刷新页面了。");
+  }).catch(function () {
+    window.alert("保存失败，请重试。");
+  });
 
   projectTitleInput.value = "";
   projectBriefInput.value = "";
