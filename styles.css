@@ -91,19 +91,6 @@ nav a {
   position: relative;
 }
 
-.hero > div {
-  max-width: 920px;
-  margin: auto;
-  position: relative;
-  z-index: 1;
-}
-
-.eyebrow {
-  margin: 0;
-  font-size: 14px;
-  letter-spacing: 0.24em;
-  color: #888;
-}
 
 .section {
   padding: 40px 40px 56px;
