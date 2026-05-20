@@ -1058,13 +1058,23 @@ function createSettingsMenu(card) {
   });
 
   var cropBtn = null;
-  // 图文项目才显示封面裁切
   if (card.classList.contains("project-card")) {
     cropBtn = document.createElement("button");
     cropBtn.textContent = "封面裁切";
     cropBtn.addEventListener("click", function (e) {
       e.stopPropagation();
       openCoverCrop(card);
+      menu.classList.remove("visible");
+    });
+  }
+
+  // 视频卡片才显示压缩
+  if (card.querySelector(".video-preview") && card.getAttribute("data-work-id")) {
+    var compressBtn = document.createElement("button");
+    compressBtn.textContent = "压缩视频";
+    compressBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      compressExistingVideo(card);
       menu.classList.remove("visible");
     });
   }
@@ -1081,6 +1091,7 @@ function createSettingsMenu(card) {
   menu.appendChild(editBtn);
   menu.appendChild(coverBtn);
   if (cropBtn) menu.appendChild(cropBtn);
+  if (compressBtn) menu.appendChild(compressBtn);
   menu.appendChild(deleteBtn);
   cardMedia.appendChild(menu);
 
@@ -1143,6 +1154,55 @@ function editWork(card) {
       title.classList.remove("editing");
     }, { once: true });
   }
+}
+
+// === 压缩已有视频 ===
+function compressExistingVideo(card) {
+  var workId = card.getAttribute("data-work-id");
+  if (!workId) return;
+
+  openDB().then(function (db) {
+    var tx = db.transaction(STORE_NAME, "readonly");
+    var req = tx.objectStore(STORE_NAME).get(workId);
+    req.onsuccess = function () {
+      var work = req.result;
+      if (!work || !work.fileData) {
+        window.alert("未找到视频数据。");
+        return;
+      }
+      if (!needsCompression(work.fileData)) {
+        window.alert("视频已足够小，无需压缩。");
+        return;
+      }
+      window.alert("开始压缩视频，请耐心等待……");
+      var file = new File([work.fileData], work.fileName || "video.mp4", { type: work.fileData.type || "video/mp4" });
+      compressVideo(file, function (compressedFile) {
+        // 更新 IndexedDB
+        updateWorkInDB(workId, {
+          fileData: compressedFile,
+          fileName: compressedFile.name,
+          description: "已压缩的视频作品。"
+        }).then(function () {
+          // 更新卡片
+          var url = URL.createObjectURL(compressedFile);
+          var videoEl = card.querySelector("video");
+          if (videoEl) videoEl.src = url;
+          var desc = card.querySelector(".card-body p");
+          if (desc) desc.textContent = "已压缩的视频作品。";
+          window.alert("压缩完成！");
+        }).catch(function () {
+          window.alert("更新存储失败。");
+        });
+      }, function () {
+        window.alert("压缩失败，原文件未改动。");
+      });
+    };
+    req.onerror = function () {
+      window.alert("读取视频数据失败。");
+    };
+  }).catch(function () {
+    window.alert("无法访问存储。");
+  });
 }
 
 // === 换封面 ===
