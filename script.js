@@ -413,6 +413,67 @@ var hardcodedProjects = {
 // 内存缓存：IndexedDB 加载的项目数据
 var allProjects = {};
 
+// === localStorage 编辑持久化 ===
+var LOCAL_EDITS_KEY = "portfolio-local-edits";
+
+function loadLocalEdits() {
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_EDITS_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveLocalEdits() {
+  var edits = {};
+  Object.keys(allProjects).forEach(function (id) {
+    var p = allProjects[id];
+    edits[id] = {
+      title: p.title,
+      brief: p.brief,
+      timeline: p.timeline,
+      content: p.content,
+      results: p.results,
+      coverPosition: p.coverPosition,
+      coverZoom: p.coverZoom
+    };
+  });
+  // 保存视频描述
+  document.querySelectorAll("#videos .card").forEach(function (card) {
+    var video = card.querySelector("video");
+    var h3 = card.querySelector(".card-body h3");
+    var p = card.querySelector(".card-body p");
+    if (video && h3) {
+      var src = video.getAttribute("src");
+      var key = "vid:" + src;
+      edits[key] = { title: h3.textContent, description: p ? p.textContent : "" };
+    }
+  });
+  localStorage.setItem(LOCAL_EDITS_KEY, JSON.stringify(edits));
+}
+
+function applyLocalEdits() {
+  var edits = loadLocalEdits();
+  // 合并到硬编码项目
+  Object.keys(edits).forEach(function (key) {
+    if (key.indexOf("vid:") === 0) {
+      // 视频编辑：应用回 HTML 卡片
+      var src = key.slice(4);
+      var card = document.querySelector('#videos video[src="' + src + '"]');
+      if (card) {
+        card = card.closest(".card");
+        var h3 = card.querySelector(".card-body h3");
+        var p = card.querySelector(".card-body p");
+        if (h3 && edits[key].title) h3.textContent = edits[key].title;
+        if (p && edits[key].description) p.textContent = edits[key].description;
+      }
+    } else if (hardcodedProjects[key]) {
+      // 合并编辑到硬编码项目
+      Object.assign(hardcodedProjects[key], edits[key]);
+    }
+  });
+}
+
 // === 设备指纹 ===
 function generateDeviceFingerprint() {
   var components = [
@@ -524,7 +585,8 @@ function authorizePage() {
     bodyElement.classList.add("visible");
   }
 
-  // 先渲染持久化的作品，再初始化所有卡片
+  // 应用本地编辑（刷新不丢失），再渲染作品
+  applyLocalEdits();
   loadBannerFromDB().catch(function () {}).then(function () {
     return loadFooterBannerFromDB().catch(function () {});
   }).then(function () {
@@ -747,6 +809,7 @@ function deleteProjectImage(projectId, index, container) {
   buildDetailImages(container, project, projectId);
   persistProjectToDB(projectId);
   refreshProjectCard(projectId);
+  saveLocalEdits();
 }
 
 function addProjectImages(projectId, container) {
@@ -822,6 +885,7 @@ function saveDetailEdits(container, projectId) {
   }
   persistProjectToDB(projectId);
   refreshProjectCard(projectId);
+  saveLocalEdits();
 }
 
 function persistProjectToDB(projectId) {
@@ -1302,6 +1366,7 @@ function persistCardEdit(card) {
       brief: descText
     }).catch(function () {});
   }
+  saveLocalEdits();
 }
 
 // === 卡片点击绑定 ===
