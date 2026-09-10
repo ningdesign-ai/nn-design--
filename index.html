@@ -4,160 +4,148 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>宁宁的作品集</title>
-  <link rel="stylesheet" href="styles.css?v=17" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #fff; color: #111; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+    .site-header { max-width: 1000px; margin: 0 auto; padding: 40px 24px 28px; text-align: center; }
+    .site-header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.02em; }
+    .site-header p { margin-top: 8px; font-size: 14px; color: #999; }
+    .portfolio { max-width: 1000px; margin: 0 auto; }
+    .portfolio img { width: 100%; display: block; }
+    .video-section { max-width: 1000px; margin: 0 auto; padding: 64px 24px 40px; }
+    .video-section-head { text-align: center; margin-bottom: 40px; }
+    .video-section-head h2 { font-size: 22px; font-weight: 700; }
+    .video-section-head p { margin-top: 8px; font-size: 14px; color: #999; }
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 28px; }
+    .video-card { margin: 0; }
+    .video-card video { width: 100%; height: auto; display: block; border-radius: 12px; background: #000; }
+    .video-card figcaption { padding: 12px 2px 0; }
+    .video-card h3 { font-size: 16px; font-weight: 600; }
+    .video-card p { margin-top: 6px; font-size: 13px; color: #888; line-height: 1.6; }
+    .site-footer { max-width: 1000px; margin: 0 auto; padding: 40px 24px; text-align: center; color: #bbb; font-size: 13px; }
+    @media (max-width: 680px) {
+      .site-header { padding: 28px 16px 20px; }
+      .site-header h1 { font-size: 20px; }
+      .video-section { padding: 48px 16px 32px; }
+      .video-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    }
+  </style>
 </head>
 <body>
-  <div id="site-content" class="site-content">
-    <div id="header-area">
-      <header class="topbar">
-        <div>
-          <p class="brand">宁宁</p>
-          <p class="subtitle">Ai视觉设计师 · 作品集</p>
-        </div>
-        <nav>
-          <a href="#videos">视频</a>
-          <a href="#images">图文</a>
-        </nav>
-        <span id="author-badge" class="author-badge hidden">作者模式</span>
-          <button id="deauthorize-device" class="deauth-btn hidden" title="注销当前作者设备">注销设备</button>
-      </header>
-      <section class="hero" id="hero-banner"></section>
+  <header class="site-header">
+    <h1>宁宁 · 作品集</h1>
+    <p>Ai 视觉设计师</p>
+  </header>
+  <main class="portfolio">
+    <img src="pages/page_01.jpg" alt="作品集第1页" loading="lazy" />
+    <img src="pages/page_02.jpg" alt="作品集第2页" loading="lazy" />
+    <img src="pages/page_03.jpg" alt="作品集第3页" loading="lazy" />
+    <img src="pages/page_04.jpg" alt="作品集第4页" loading="lazy" />
+    <img src="pages/page_05.jpg" alt="作品集第5页" loading="lazy" />
+    <img src="pages/page_06.jpg" alt="作品集第6页" loading="lazy" />
+    <img src="pages/page_07.jpg" alt="作品集第7页" loading="lazy" />
+    <img src="pages/page_08.jpg" alt="作品集第8页" loading="lazy" />
+    <img src="pages/page_09.jpg" alt="作品集第9页" loading="lazy" />
+    <img src="pages/page_10.jpg" alt="作品集第10页" loading="lazy" />
+    <img src="pages/page_11.jpg" alt="作品集第11页" loading="lazy" />
+    <img src="pages/page_12.jpg" alt="作品集第12页" loading="lazy" />
+    <img src="pages/page_13.jpg" alt="作品集第13页" loading="lazy" />
+    <img src="pages/page_14.jpg" alt="作品集第14页" loading="lazy" />
+    <img src="pages/page_15.jpg" alt="作品集第15页" loading="lazy" />
+    <img src="pages/page_16.jpg" alt="作品集第16页" loading="lazy" />
+    <img src="pages/page_17.jpg" alt="作品集第17页" loading="lazy" />
+    <img src="pages/page_18.jpg" alt="作品集第18页" loading="lazy" />
+    <img src="pages/page_19.jpg" alt="作品集第19页" loading="lazy" />
+    <img src="pages/page_20.jpg" alt="作品集第20页" loading="lazy" />
+    <img src="pages/page_21.jpg" alt="作品集第21页" loading="lazy" />
+    <img src="pages/page_22.jpg" alt="作品集第22页" loading="lazy" />
+    <img src="pages/page_23.jpg" alt="作品集第23页" loading="lazy" />
+    <img src="pages/page_24.jpg" alt="作品集第24页" loading="lazy" />
+    <img src="pages/page_25.jpg" alt="作品集第25页" loading="lazy" />
+    <img src="pages/page_26.jpg" alt="作品集第26页" loading="lazy" />
+    <img src="pages/page_27.jpg" alt="作品集第27页" loading="lazy" />
+    <img src="pages/page_28.jpg" alt="作品集第28页" loading="lazy" />
+    <img src="pages/page_29.jpg" alt="作品集第29页" loading="lazy" />
+    <img src="pages/page_30.jpg" alt="作品集第30页" loading="lazy" />
+    <img src="pages/page_31.jpg" alt="作品集第31页" loading="lazy" />
+    <img src="pages/page_32.jpg" alt="作品集第32页" loading="lazy" />
+    <img src="pages/page_33.jpg" alt="作品集第33页" loading="lazy" />
+    <img src="pages/page_34.jpg" alt="作品集第34页" loading="lazy" />
+    <img src="pages/page_35.jpg" alt="作品集第35页" loading="lazy" />
+    <img src="pages/page_36.jpg" alt="作品集第36页" loading="lazy" />
+    <img src="pages/page_37.jpg" alt="作品集第37页" loading="lazy" />
+    <img src="pages/page_38.jpg" alt="作品集第38页" loading="lazy" />
+    <img src="pages/page_39.jpg" alt="作品集第39页" loading="lazy" />
+    <img src="pages/page_40.jpg" alt="作品集第40页" loading="lazy" />
+    <img src="pages/page_41.jpg" alt="作品集第41页" loading="lazy" />
+    <img src="pages/page_42.jpg" alt="作品集第42页" loading="lazy" />
+    <img src="pages/page_43.jpg" alt="作品集第43页" loading="lazy" />
+    <img src="pages/page_44.jpg" alt="作品集第44页" loading="lazy" />
+  </main>
+  <section class="video-section">
+    <div class="video-section-head">
+      <h2>视频作品</h2>
+      <p>动态影像与信息流广告案例</p>
     </div>
-
-    <main>
-
-      <section id="upload" class="section upload-section hidden">
-        <div class="section-head">
-          <p class="section-label">00</p>
-          <h2>上传作品</h2>
-        </div>
-        <div class="upload-grid">
-          <div class="upload-card banner-upload-card">
-            <h3>更换顶部 Banner</h3>
-            <p>选择一张宽幅图片作为页面顶部背景。</p>
-            <input id="banner-file" type="file" accept="image/*" />
-            <button id="upload-banner">更换顶部 Banner</button>
-            <button id="remove-banner" class="banner-remove-btn">移除顶部 Banner</button>
-          </div>
-          <div class="upload-card banner-upload-card">
-            <h3>更换底部 Banner</h3>
-            <p>选择一张宽幅图片作为页面底部背景。</p>
-            <input id="footer-banner-file" type="file" accept="image/*" />
-            <button id="upload-footer-banner">更换底部 Banner</button>
-            <button id="remove-footer-banner" class="banner-remove-btn">移除底部 Banner</button>
-          </div>
-        </div>
-      </section>
-
-      <section id="videos" class="section">
-        <div class="section-head">
-          <p class="section-label">01</p>
-          <h2>视频作品</h2>
-        </div>
-        <div class="grid">
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="TK风机信息流-ai.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>TK风机信息流</h3>
-              <p>风机信息流短视频方案。</p>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="ai真人剧制作.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>AI真人剧制作</h3>
-              <p>AI真人剧制作案例展示。</p>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="抖音产品-抖音精选信息流.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>抖音精选信息流</h3>
-              <p>抖音精选信息流广告。</p>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="抖音产品-抖音精选信息流1.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>抖音精选信息流 1</h3>
-              <p>抖音精选信息流广告。</p>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="抖音产品-抖音精选信息流2.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>抖音精选信息流 2</h3>
-              <p>抖音精选信息流广告。</p>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="抖音产品-抖音精选信息流3.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>抖音精选信息流 3</h3>
-              <p>抖音精选信息流广告。</p>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="短剧app宣传视频.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>短剧APP宣传视频</h3>
-              <p>短剧APP宣传视频展示。</p>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-media">
-              <div class="video-preview">
-                <video src="超写实医学3D微观动画.mp4" preload="metadata" muted playsinline></video>
-              </div>
-            </div>
-            <div class="card-body">
-              <h3>超写实医学3D微观动画</h3>
-              <p>超写实医学3D微观动画作品。</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section id="images" class="section">
-        <div class="section-head">
-          <p class="section-label">02</p>
-          <h2>图文作品</h2>
-        </div>
-        <div class="grid">
-        </div>
-      </section>
-    </main>
-    <footer class="footer-banner" id="footer-banner"></footer>
-  </div>
-
-  <script src="script.js?v=24"></script>
+    <div class="video-grid">
+    <figure class="video-card">
+      <video src="TK%E9%A3%8E%E6%9C%BA%E4%BF%A1%E6%81%AF%E6%B5%81-ai.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>TK风机信息流</h3>
+        <p>风机信息流短视频方案。</p>
+      </figcaption>
+    </figure>
+    <figure class="video-card">
+      <video src="app%E4%BF%A1%E6%81%AF%E6%B5%81%E5%AE%A3%E4%BC%A0%E8%A7%86%E9%A2%91.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>APP信息流宣传</h3>
+        <p>App信息流宣传视频。</p>
+      </figcaption>
+    </figure>
+    <figure class="video-card">
+      <video src="ai%E6%95%B0%E5%AD%97%E4%BA%BA%E5%8F%A3%E6%92%AD%20%282%29.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>AI数字人口播</h3>
+        <p>AI数字人口播视频。</p>
+      </figcaption>
+    </figure>
+    <figure class="video-card">
+      <video src="%E6%8A%96%E9%9F%B3%E4%BA%A7%E5%93%81-%E6%8A%96%E9%9F%B3%E7%B2%BE%E9%80%89%E4%BF%A1%E6%81%AF%E6%B5%811.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>抖音精选信息流 1</h3>
+        <p>抖音精选信息流广告。</p>
+      </figcaption>
+    </figure>
+    <figure class="video-card">
+      <video src="%E6%8A%96%E9%9F%B3%E4%BA%A7%E5%93%81-%E6%8A%96%E9%9F%B3%E7%B2%BE%E9%80%89%E4%BF%A1%E6%81%AF%E6%B5%812.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>抖音精选信息流 2</h3>
+        <p>抖音精选信息流广告。</p>
+      </figcaption>
+    </figure>
+    <figure class="video-card">
+      <video src="%E6%8A%96%E9%9F%B3%E4%BA%A7%E5%93%81-%E6%8A%96%E9%9F%B3%E7%B2%BE%E9%80%89%E4%BF%A1%E6%81%AF%E6%B5%813.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>抖音精选信息流 3</h3>
+        <p>抖音精选信息流广告。</p>
+      </figcaption>
+    </figure>
+    <figure class="video-card">
+      <video src="%E7%95%AA%E8%8C%84%E5%B0%8F%E8%AF%B4-%E6%82%AC%E7%96%91%E5%89%A7%E6%83%85.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>番茄小说·悬疑剧情</h3>
+        <p>番茄小说悬疑剧情信息流。</p>
+      </figcaption>
+    </figure>
+    <figure class="video-card">
+      <video src="%E7%9F%AD%E5%89%A7app%E5%AE%A3%E4%BC%A0%E8%A7%86%E9%A2%91.mp4" controls muted playsinline preload="metadata"></video>
+      <figcaption>
+        <h3>短剧APP宣传视频</h3>
+        <p>短剧APP宣传视频展示。</p>
+      </figcaption>
+    </figure>
+    </div>
+  </section>
+  <footer class="site-footer">© 宁宁作品集</footer>
 </body>
 </html>
