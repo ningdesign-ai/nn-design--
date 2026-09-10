@@ -4,6 +4,13 @@ var AUTHOR_DEVICE_KEY = "portfolio-author-device";
 var AUTHOR_STORAGE_KEY = "portfolio-author";
 var BASE_SITE_URL = "https://ningdesign-ai.github.io/nn-design--/";
 
+// 源网站 = 本地编辑环境（file:// 或 localhost）；展示站 = 部署后的线上地址
+var IS_SOURCE_SITE = (function () {
+  var proto = window.location.protocol;
+  var host = window.location.hostname;
+  return proto === "file:" || host === "localhost" || host === "127.0.0.1";
+})();
+
 var bodyElement = document.body;
 var siteContent = document.getElementById("site-content");
 var uploadSection = document.getElementById("upload");
@@ -514,8 +521,13 @@ function setAuthorMode(enabled) {
     uploadSection.classList.toggle("hidden", !enabled);
   }
   if (authorBadge) {
-    authorBadge.textContent = enabled ? "作者模式" : "读者模式";
-    authorBadge.classList.remove("hidden");
+    if (IS_SOURCE_SITE) {
+      authorBadge.textContent = enabled ? "作者模式" : "读者模式";
+      authorBadge.classList.remove("hidden");
+    } else {
+      // 展示站：不显示任何模式标识
+      authorBadge.classList.add("hidden");
+    }
   }
   if (deauthButton) {
     deauthButton.classList.toggle("hidden", !enabled);
@@ -561,13 +573,14 @@ function authorizePage() {
   var urlAccess = getUrlAccessCode();
   var registrationKey = urlAccess || hash;
 
-  if (registrationKey === DEVICE_REGISTRATION_KEY && !isAuthorDevice()) {
+  if (IS_SOURCE_SITE && registrationKey === DEVICE_REGISTRATION_KEY && !isAuthorDevice()) {
     registerAuthorDevice(DEVICE_REGISTRATION_KEY);
     window.location.href = getBaseUrl();
     return;
   }
 
-  var isAuthor = isAuthorDevice();
+  // 只有源网站才允许作者模式；展示站一律只读（读者模式）
+  var isAuthor = IS_SOURCE_SITE && isAuthorDevice();
 
   setAuthorMode(isAuthor);
 
@@ -1412,13 +1425,13 @@ function ensureCardMedia(card) {
 
 
 function getBaseUrl() {
+  if (window.location.protocol === "file:") {
+    return window.location.href.split("?")[0].split("#")[0];
+  }
   if (BASE_SITE_URL) {
     return BASE_SITE_URL.replace(/\/index\.html$|\/$/, "/index.html");
   }
-  if (window.location.protocol.startsWith("http")) {
-    return window.location.origin + window.location.pathname;
-  }
-  return window.location.href.split("?")[0].split("#")[0];
+  return window.location.origin + window.location.pathname;
 }
 
 // === 事件绑定 ===
