@@ -7,11 +7,13 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #fff; color: #111; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
-    .site-header { position: relative; background-image: url('页眉.jpg'); background-size: cover; background-position: center; text-align: center; padding: 96px 24px; overflow: hidden; }
-    .frosted-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .fixed-header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; text-align: center; padding: 24px 24px; overflow: hidden; }
+    .frosted-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); opacity: 0; transition: opacity 0.3s ease; }
+    .fixed-header.scrolled .frosted-layer { opacity: 1; }
     .header-content { position: relative; z-index: 1; }
-    .site-header h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.02em; color: #111; }
-    .site-header p { margin-top: 8px; font-size: 14px; color: #444; }
+    .header-content h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.02em; color: #111; text-shadow: 0 1px 3px rgba(255,255,255,0.5); }
+    .header-content p { margin-top: 8px; font-size: 14px; color: #444; text-shadow: 0 1px 3px rgba(255,255,255,0.5); }
+    .site-banner { height: 220px; background-image: url('页眉.jpg'); background-size: cover; background-position: center; }
     .portfolio { max-width: 1000px; margin: 0 auto; }
     .portfolio img { width: 100%; display: block; }
     .video-section { max-width: 1000px; margin: 0 auto; padding: 64px 24px 40px; }
@@ -24,24 +26,26 @@
     .video-card figcaption { padding: 12px 2px 0; }
     .video-card h3 { font-size: 16px; font-weight: 600; }
     .video-card p { margin-top: 6px; font-size: 13px; color: #888; line-height: 1.6; }
-    .site-footer { position: relative; background-image: url('封底.jpg'); background-size: cover; background-position: center; text-align: center; padding: 80px 24px; overflow: hidden; }
-    .footer-content { position: relative; z-index: 1; color: #333; font-size: 13px; }
+    .site-footer { background-image: url('封底.jpg'); background-size: cover; background-position: center; text-align: center; padding: 90px 24px; }
+    .footer-content { color: #fff; font-size: 13px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
     @media (max-width: 680px) {
-      .site-header { padding: 56px 16px 48px; }
-      .site-header h1 { font-size: 20px; }
+      .fixed-header { padding: 16px 16px; }
+      .header-content h1 { font-size: 20px; }
+      .site-banner { height: 120px; }
       .video-section { padding: 48px 16px 32px; }
       .video-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
     }
   </style>
 </head>
 <body>
-  <header class="site-header">
+  <div class="fixed-header" id="fixed-header">
     <div class="frosted-layer"></div>
     <div class="header-content">
       <h1>宁宁 · 作品集</h1>
       <p>Ai 视觉设计师</p>
     </div>
-  </header>
+  </div>
+  <header class="site-banner"></header>
   <main class="portfolio">
     <img src="pages/page_01.jpg" alt="作品集第1页" loading="lazy" />
     <img src="pages/page_02.jpg" alt="作品集第2页" loading="lazy" />
@@ -153,8 +157,17 @@
     </div>
   </section>
   <footer class="site-footer">
-    <div class="frosted-layer"></div>
     <div class="footer-content">© 宁宁作品集</div>
   </footer>
+  <script>
+    var fixedHeader = document.getElementById('fixed-header');
+    window.addEventListener('scroll', function () {
+      if (window.scrollY > 40) {
+        fixedHeader.classList.add('scrolled');
+      } else {
+        fixedHeader.classList.remove('scrolled');
+      }
+    });
+  </script>
 </body>
 </html>
