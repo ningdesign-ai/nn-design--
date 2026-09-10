@@ -21,11 +21,18 @@
     .video-section-head h2 { font-size: 22px; font-weight: 700; }
     .video-section-head p { margin-top: 8px; font-size: 14px; color: #999; }
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 28px; }
-    .video-card { margin: 0; }
-    .video-card video { width: 100%; height: auto; display: block; border-radius: 12px; background: #000; }
-    .video-card figcaption { padding: 12px 2px 0; }
+    .video-card { margin: 0; text-decoration: none; color: inherit; display: block; }
+    .video-cover { position: relative; border-radius: 12px; overflow: hidden; background: #000; }
+    .video-cover img { width: 100%; height: auto; display: block; }
+    .play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .video-card-info { padding: 12px 2px 0; }
     .video-card h3 { font-size: 16px; font-weight: 600; }
     .video-card p { margin-top: 6px; font-size: 13px; color: #888; line-height: 1.6; }
+    .video-lightbox { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+    .video-lightbox.show { display: flex; }
+    .lightbox-close { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,0.2); color: #fff; font-size: 20px; cursor: pointer; z-index: 1001; }
+    .lightbox-title { color: #fff; margin-bottom: 16px; font-size: 16px; }
+    #lightbox-player { max-width: 92vw; max-height: 76vh; border-radius: 8px; }
     .site-footer { background-image: url('封底.jpg'); background-size: cover; background-position: center; text-align: center; padding: 90px 24px; }
     .footer-content { color: #fff; font-size: 13px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
     @media (max-width: 680px) {
@@ -90,7 +97,6 @@
     <img src="pages/page_41.jpg" alt="作品集第41页" loading="lazy" />
     <img src="pages/page_42.jpg" alt="作品集第42页" loading="lazy" />
     <img src="pages/page_43.jpg" alt="作品集第43页" loading="lazy" />
-    <img src="pages/page_44.jpg" alt="作品集第44页" loading="lazy" />
   </main>
   <section class="video-section">
     <div class="video-section-head">
@@ -98,67 +104,97 @@
       <p>动态影像与信息流广告案例</p>
     </div>
     <div class="video-grid">
-    <figure class="video-card">
-      <video src="TK%E9%A3%8E%E6%9C%BA%E4%BF%A1%E6%81%AF%E6%B5%81-ai.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+    <a class="video-card" href="#" data-src="TK风机信息流-ai.mp4" data-title="TK风机信息流">
+      <div class="video-cover">
+        <img src="covers/cover_01.jpg" alt="TK风机信息流" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>TK风机信息流</h3>
         <p>风机信息流短视频方案。</p>
-      </figcaption>
-    </figure>
-    <figure class="video-card">
-      <video src="app%E4%BF%A1%E6%81%AF%E6%B5%81%E5%AE%A3%E4%BC%A0%E8%A7%86%E9%A2%91.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+      </div>
+    </a>
+    <a class="video-card" href="#" data-src="app信息流宣传视频.mp4" data-title="APP信息流宣传">
+      <div class="video-cover">
+        <img src="covers/cover_02.jpg" alt="APP信息流宣传" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>APP信息流宣传</h3>
         <p>App信息流宣传视频。</p>
-      </figcaption>
-    </figure>
-    <figure class="video-card">
-      <video src="ai%E6%95%B0%E5%AD%97%E4%BA%BA%E5%8F%A3%E6%92%AD%20%282%29.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+      </div>
+    </a>
+    <a class="video-card" href="#" data-src="ai数字人口播 (2).mp4" data-title="AI数字人口播">
+      <div class="video-cover">
+        <img src="covers/cover_03.jpg" alt="AI数字人口播" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>AI数字人口播</h3>
         <p>AI数字人口播视频。</p>
-      </figcaption>
-    </figure>
-    <figure class="video-card">
-      <video src="%E6%8A%96%E9%9F%B3%E4%BA%A7%E5%93%81-%E6%8A%96%E9%9F%B3%E7%B2%BE%E9%80%89%E4%BF%A1%E6%81%AF%E6%B5%811.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+      </div>
+    </a>
+    <a class="video-card" href="#" data-src="抖音产品-抖音精选信息流1.mp4" data-title="抖音精选信息流 1">
+      <div class="video-cover">
+        <img src="covers/cover_04.jpg" alt="抖音精选信息流 1" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>抖音精选信息流 1</h3>
         <p>抖音精选信息流广告。</p>
-      </figcaption>
-    </figure>
-    <figure class="video-card">
-      <video src="%E6%8A%96%E9%9F%B3%E4%BA%A7%E5%93%81-%E6%8A%96%E9%9F%B3%E7%B2%BE%E9%80%89%E4%BF%A1%E6%81%AF%E6%B5%812.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+      </div>
+    </a>
+    <a class="video-card" href="#" data-src="抖音产品-抖音精选信息流2.mp4" data-title="抖音精选信息流 2">
+      <div class="video-cover">
+        <img src="covers/cover_05.jpg" alt="抖音精选信息流 2" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>抖音精选信息流 2</h3>
         <p>抖音精选信息流广告。</p>
-      </figcaption>
-    </figure>
-    <figure class="video-card">
-      <video src="%E6%8A%96%E9%9F%B3%E4%BA%A7%E5%93%81-%E6%8A%96%E9%9F%B3%E7%B2%BE%E9%80%89%E4%BF%A1%E6%81%AF%E6%B5%813.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+      </div>
+    </a>
+    <a class="video-card" href="#" data-src="抖音产品-抖音精选信息流3.mp4" data-title="抖音精选信息流 3">
+      <div class="video-cover">
+        <img src="covers/cover_06.jpg" alt="抖音精选信息流 3" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>抖音精选信息流 3</h3>
         <p>抖音精选信息流广告。</p>
-      </figcaption>
-    </figure>
-    <figure class="video-card">
-      <video src="%E7%95%AA%E8%8C%84%E5%B0%8F%E8%AF%B4-%E6%82%AC%E7%96%91%E5%89%A7%E6%83%85.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+      </div>
+    </a>
+    <a class="video-card" href="#" data-src="番茄小说-悬疑剧情.mp4" data-title="番茄小说·悬疑剧情">
+      <div class="video-cover">
+        <img src="covers/cover_07.jpg" alt="番茄小说·悬疑剧情" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>番茄小说·悬疑剧情</h3>
         <p>番茄小说悬疑剧情信息流。</p>
-      </figcaption>
-    </figure>
-    <figure class="video-card">
-      <video src="%E7%9F%AD%E5%89%A7app%E5%AE%A3%E4%BC%A0%E8%A7%86%E9%A2%91.mp4" controls muted playsinline preload="metadata"></video>
-      <figcaption>
+      </div>
+    </a>
+    <a class="video-card" href="#" data-src="短剧app宣传视频.mp4" data-title="短剧APP宣传视频">
+      <div class="video-cover">
+        <img src="covers/cover_08.jpg" alt="短剧APP宣传视频" loading="lazy" />
+        <span class="play-btn">&#9654;</span>
+      </div>
+      <div class="video-card-info">
         <h3>短剧APP宣传视频</h3>
         <p>短剧APP宣传视频展示。</p>
-      </figcaption>
-    </figure>
+      </div>
+    </a>
     </div>
   </section>
   <footer class="site-footer">
     <div class="footer-content">© 宁宁作品集</div>
   </footer>
+  <div class="video-lightbox" id="video-lightbox">
+    <button class="lightbox-close" id="lightbox-close">&times;</button>
+    <div class="lightbox-title" id="lightbox-title"></div>
+    <video id="lightbox-player" controls autoplay playsinline></video>
+  </div>
+
   <script>
     var fixedHeader = document.getElementById('fixed-header');
     window.addEventListener('scroll', function () {
@@ -167,6 +203,32 @@
       } else {
         fixedHeader.classList.remove('scrolled');
       }
+    });
+
+    var videoCards = document.querySelectorAll('.video-card');
+    var videoLightbox = document.getElementById('video-lightbox');
+    var lightboxTitle = document.getElementById('lightbox-title');
+    var lightboxPlayer = document.getElementById('lightbox-player');
+    var lightboxClose = document.getElementById('lightbox-close');
+    videoCards.forEach(function (card) {
+      card.addEventListener('click', function (e) {
+        e.preventDefault();
+        var src = card.getAttribute('data-src');
+        var title = card.getAttribute('data-title');
+        lightboxTitle.textContent = title || '';
+        lightboxPlayer.src = src;
+        videoLightbox.classList.add('show');
+      });
+    });
+    function closeVideoLightbox() {
+      videoLightbox.classList.remove('show');
+      lightboxPlayer.pause();
+      lightboxPlayer.removeAttribute('src');
+      lightboxPlayer.load();
+    }
+    lightboxClose.addEventListener('click', closeVideoLightbox);
+    videoLightbox.addEventListener('click', function (e) {
+      if (e.target === videoLightbox) closeVideoLightbox();
     });
   </script>
 </body>
